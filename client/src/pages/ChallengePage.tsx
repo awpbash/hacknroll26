@@ -9,35 +9,33 @@ import { providerLogos } from '../data/providerLogos';
 import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, ArchitectureEdge } from '../types';
 
 const PageContainer = styled.div`
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  max-width: 100%;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 const Header = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
 `;
 
-const HeaderLeft = styled.div``;
-
 const Title = styled.h1`
-  font-size: 40px;
-  margin: 0 0 12px 0;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
 `;
 
 const BadgeContainer = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 `;
 
@@ -46,39 +44,37 @@ interface DifficultyBadgeProps {
 }
 
 const DifficultyBadge = styled.span<DifficultyBadgeProps>`
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  background: ${props => {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${props => {
     switch(props.difficulty) {
-      case 'Easy': return 'linear-gradient(135deg, #10b981, #059669)';
-      case 'Medium': return 'linear-gradient(135deg, #f59e0b, #d97706)';
-      case 'Hard': return 'linear-gradient(135deg, #ef4444, #dc2626)';
-      default: return 'var(--bg-tertiary)';
+      case 'Easy': return '#10b981';
+      case 'Medium': return '#f59e0b';
+      case 'Hard': return '#ef4444';
+      default: return 'var(--text-secondary)';
     }
   }};
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border: 1px solid currentColor;
 `;
 
 const CategoryBadge = styled.span`
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: white;
-  box-shadow: var(--shadow-sm);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
 `;
 
 const ContentContainer = styled.div`
   display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  grid-template-columns: 45% 1fr;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
     grid-template-columns: 1fr;
@@ -87,25 +83,24 @@ const ContentContainer = styled.div`
 
 const LeftPanel = styled.div`
   background: var(--bg-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
-  max-height: 800px;
-  overflow: hidden;
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
-    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
   }
 `;
 
 const TabBar = styled.div`
   display: flex;
-  gap: 8px;
-  padding: 20px 20px 0 20px;
-  border-bottom: 2px solid var(--border-color);
+  gap: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  flex-shrink: 0;
 `;
 
 interface TabButtonProps {
@@ -113,21 +108,18 @@ interface TabButtonProps {
 }
 
 const TabButton = styled.button<TabButtonProps>`
-  padding: 12px 20px;
-  background: ${props => props.active ? 'var(--bg-tertiary)' : 'transparent'};
+  padding: 10px 16px;
+  background: transparent;
   color: ${props => props.active ? 'var(--text-primary)' : 'var(--text-secondary)'};
   border: none;
-  border-bottom: 3px solid ${props => props.active ? 'var(--accent-primary)' : 'transparent'};
+  border-bottom: 2px solid ${props => props.active ? 'var(--accent-primary)' : 'transparent'};
   cursor: pointer;
-  font-size: 15px;
-  font-weight: ${props => props.active ? '600' : '500'};
-  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: ${props => props.active ? '600' : '400'};
+  transition: all 0.15s;
   position: relative;
-  border-radius: 8px 8px 0 0;
-  margin-bottom: -2px;
 
   &:hover {
-    background: var(--bg-tertiary);
     color: var(--text-primary);
   }
 `;
@@ -135,49 +127,42 @@ const TabButton = styled.button<TabButtonProps>`
 const TabContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 28px;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.6;
 `;
 
 const RightPanel = styled.div`
-  background: var(--bg-secondary);
-  padding: 28px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
+  background: var(--bg-primary);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 const Section = styled.div`
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 
   &:last-child {
     margin-bottom: 0;
   }
 `;
 
-interface SectionTitleProps {
-  icon?: string;
-}
-
-const SectionTitle = styled.h3<SectionTitleProps>`
-  font-size: 18px;
-  margin: 0 0 16px 0;
+const SectionTitle = styled.h3`
+  font-size: 14px;
+  margin: 0 0 10px 0;
   color: var(--text-primary);
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  &::before {
-    content: ${props => props.icon ? `"${props.icon}"` : '""'};
-    font-size: 20px;
-  }
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
 `;
 
 const Description = styled.p`
   color: var(--text-secondary);
-  line-height: 1.7;
+  line-height: 1.6;
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
 `;
 
 const RequirementsList = styled.ul`
@@ -187,48 +172,49 @@ const RequirementsList = styled.ul`
 `;
 
 const RequirementItem = styled.li`
-  padding: 10px 0;
+  padding: 6px 0;
   color: var(--text-secondary);
   display: flex;
   align-items: start;
-  gap: 10px;
+  gap: 8px;
   line-height: 1.6;
+  font-size: 14px;
 
   &:before {
-    content: "✓";
-    color: var(--accent-success);
-    font-weight: bold;
-    font-size: 18px;
+    content: "•";
+    color: var(--text-muted);
     flex-shrink: 0;
-    margin-top: 2px;
   }
 `;
 
 const ConstraintBox = styled.div`
   background: var(--bg-tertiary);
-  padding: 16px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
 `;
 
 const ConstraintItem = styled.div`
-  color: var(--text-primary);
-  font-weight: 600;
-  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+  font-size: 13px;
 
   &:last-child {
     margin-bottom: 0;
   }
 
   span {
-    color: var(--accent-warning);
+    color: var(--text-primary);
+    font-weight: 600;
   }
 `;
 
 const ProviderSelector = styled.div`
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 `;
 
 interface ProviderButtonProps {
@@ -236,24 +222,22 @@ interface ProviderButtonProps {
 }
 
 const ProviderButton = styled.button<ProviderButtonProps>`
-  padding: 10px 20px;
-  border: 2px solid ${props => props.active ? 'var(--accent-primary)' : 'var(--border-color)'};
-  background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
+  padding: 6px 12px;
+  border: 1px solid ${props => props.active ? 'var(--accent-primary)' : 'var(--border-color)'};
+  background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-secondary)'};
   color: var(--text-primary);
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  box-shadow: ${props => props.active ? 'var(--glow-primary)' : 'var(--shadow-sm)'};
-  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.15s;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 
   &:hover {
     border-color: var(--accent-primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
   }
 `;
 
@@ -262,35 +246,32 @@ interface ProviderLogoProps {
 }
 
 const ProviderLogo = styled.img<ProviderLogoProps>`
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   filter: ${props => props.active ? 'brightness(0) invert(1)' : 'brightness(1)'};
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--accent-success), #059669);
+  padding: 10px;
+  background: var(--accent-success);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 17px;
-  font-weight: 700;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 20px;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+  margin-top: 16px;
 
   &:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    background: #059669;
   }
 
   &:disabled {
     background: var(--bg-tertiary);
     cursor: not-allowed;
-    box-shadow: none;
     color: var(--text-muted);
   }
 `;
@@ -406,50 +387,51 @@ const EmptyStateText = styled.div`
 
 const MarkdownContent = styled.div`
   color: var(--text-secondary);
-  line-height: 1.8;
+  line-height: 1.6;
+  font-size: 14px;
 
   h2 {
     color: var(--text-primary);
-    font-size: 20px;
-    margin: 24px 0 12px 0;
+    font-size: 16px;
+    margin: 16px 0 8px 0;
     font-weight: 600;
   }
 
   h3 {
     color: var(--text-primary);
-    font-size: 18px;
-    margin: 20px 0 10px 0;
+    font-size: 14px;
+    margin: 12px 0 6px 0;
     font-weight: 600;
   }
 
   p {
-    margin: 12px 0;
+    margin: 8px 0;
   }
 
   ul, ol {
-    margin: 12px 0;
-    padding-left: 24px;
+    margin: 8px 0;
+    padding-left: 20px;
   }
 
   li {
-    margin: 8px 0;
+    margin: 4px 0;
   }
 
   code {
     background: var(--bg-tertiary);
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 2px 4px;
+    border-radius: 3px;
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--accent-primary);
   }
 
   pre {
     background: var(--bg-tertiary);
-    padding: 16px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 6px;
     overflow-x: auto;
-    margin: 16px 0;
+    margin: 12px 0;
     border: 1px solid var(--border-color);
 
     code {
@@ -468,16 +450,14 @@ const MarkdownContent = styled.div`
 const SolutionCard = styled.div`
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 16px;
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 
   &:hover {
     border-color: var(--accent-primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
   }
 `;
 
@@ -485,11 +465,11 @@ const SolutionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 `;
 
 const SolutionTitle = styled.h4`
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-primary);
   margin: 0;
   font-weight: 600;
@@ -497,24 +477,24 @@ const SolutionTitle = styled.h4`
 
 const SolutionMeta = styled.div`
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 `;
 
 const SolutionStats = styled.div`
   display: flex;
-  gap: 20px;
-  margin-top: 12px;
+  gap: 16px;
+  margin-top: 10px;
 `;
 
 const SolutionStat = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 
   span {
     color: var(--text-primary);
@@ -525,15 +505,15 @@ const SolutionStat = styled.div`
 const UpvoteButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 4px;
+  padding: 4px 10px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 14px;
+  transition: all 0.15s;
+  font-size: 13px;
 
   &:hover {
     border-color: var(--accent-primary);
@@ -838,15 +818,13 @@ const ChallengePage: React.FC = () => {
   return (
     <PageContainer>
       <Header>
-        <HeaderLeft>
-          <Title>{challenge.title}</Title>
-          <BadgeContainer>
-            <DifficultyBadge difficulty={challenge.difficulty}>
-              {challenge.difficulty}
-            </DifficultyBadge>
-            <CategoryBadge>{challenge.category}</CategoryBadge>
-          </BadgeContainer>
-        </HeaderLeft>
+        <Title>{challenge.title}</Title>
+        <BadgeContainer>
+          <DifficultyBadge difficulty={challenge.difficulty}>
+            {challenge.difficulty}
+          </DifficultyBadge>
+          <CategoryBadge>{challenge.category}</CategoryBadge>
+        </BadgeContainer>
       </Header>
 
       <ContentContainer>
@@ -876,12 +854,12 @@ const ChallengePage: React.FC = () => {
             {activeTab === 'description' && (
               <>
                 <Section>
-                  <SectionTitle icon="📋">Description</SectionTitle>
+                  <SectionTitle>Description</SectionTitle>
                   <Description>{challenge.description}</Description>
                 </Section>
 
                 <Section>
-                  <SectionTitle icon="✅">Requirements</SectionTitle>
+                  <SectionTitle>Requirements</SectionTitle>
                   <RequirementsList>
                     {challenge.requirements.map((req: string, index: number) => (
                       <RequirementItem key={index}>{req}</RequirementItem>
@@ -890,7 +868,7 @@ const ChallengePage: React.FC = () => {
                 </Section>
 
                 <Section>
-                  <SectionTitle icon="⚙️">Constraints</SectionTitle>
+                  <SectionTitle>Constraints</SectionTitle>
                   <ConstraintBox>
                     <ConstraintItem>
                       Max Budget: <span>${challenge.constraints.maxCost}/month</span>
@@ -905,7 +883,7 @@ const ChallengePage: React.FC = () => {
 
                 {challenge.existingInfrastructure && (
                   <Section>
-                    <SectionTitle icon="🏢">Existing Infrastructure</SectionTitle>
+                    <SectionTitle>Existing Infrastructure</SectionTitle>
                     <Description style={{ marginBottom: '12px' }}>
                       Your company already has the following services deployed. Build upon this existing setup:
                     </Description>
@@ -938,7 +916,7 @@ const ChallengePage: React.FC = () => {
         </LeftPanel>
 
         <RightPanel>
-          <SectionTitle icon="🏗️">Design Your Architecture</SectionTitle>
+          <SectionTitle>Design Your Architecture</SectionTitle>
 
           <ProviderSelector>
             {(['AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'] as CloudProvider[]).map((provider: CloudProvider) => (
