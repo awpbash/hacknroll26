@@ -1,0 +1,254 @@
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { cloudServices } from '../data/cloudServices';
+import { providerLogos } from '../data/providerLogos';
+
+const PageContainer = styled.div`
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+`;
+
+const Header = styled.div`
+  margin-bottom: 40px;
+  text-align: center;
+`;
+
+const Title = styled.h1`
+  font-size: 42px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+`;
+
+const Subtitle = styled.p`
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin: 0;
+`;
+
+const ProviderTabs = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+`;
+
+const ProviderTab = styled.button`
+  padding: 14px 32px;
+  background: ${props => props.active ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-secondary)'};
+  color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
+  border: 2px solid ${props => props.active ? 'transparent' : 'var(--border-color)'};
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: ${props => props.active ? 'var(--glow-primary)' : 'var(--shadow-sm)'};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+  }
+`;
+
+const ProviderLogo = styled.img`
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: ${props => props.active ? 'brightness(0) invert(1)' : 'brightness(1)'};
+`;
+
+const CategorySection = styled.div`
+  margin-bottom: 48px;
+`;
+
+const CategoryHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-color);
+`;
+
+const CategoryIcon = styled.div`
+  font-size: 32px;
+`;
+
+const CategoryTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+`;
+
+const ServiceGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+`;
+
+const ServiceCard = styled.div`
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg), var(--glow-primary);
+  }
+`;
+
+const ServiceHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+`;
+
+const ServiceName = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+`;
+
+const ServiceCost = styled.div`
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-success);
+  border: 1px solid var(--border-color);
+`;
+
+const ServiceDescription = styled.p`
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+`;
+
+const ServiceTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const ServiceTag = styled.span`
+  padding: 4px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+`;
+
+const LearnPage = () => {
+  const [selectedProvider, setSelectedProvider] = useState('AWS');
+
+  const providers = ['AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'];
+
+  const categoryIcons = {
+    compute: '⚡',
+    storage: '💾',
+    database: '🗄️',
+    networking: '🌐',
+    ai: '🤖',
+    serverless: '☁️'
+  };
+
+  const categoryNames = {
+    compute: 'Compute Services',
+    storage: 'Storage Services',
+    database: 'Database Services',
+    networking: 'Networking Services',
+    ai: 'AI & Machine Learning',
+    serverless: 'Serverless Services'
+  };
+
+  const services = cloudServices[selectedProvider] || {};
+
+  return (
+    <PageContainer>
+      <Header>
+        <Title>Learn Cloud Services</Title>
+        <Subtitle>
+          Explore and understand cloud services from major providers
+        </Subtitle>
+      </Header>
+
+      <ProviderTabs>
+        {providers.map(provider => (
+          <ProviderTab
+            key={provider}
+            active={selectedProvider === provider}
+            onClick={() => setSelectedProvider(provider)}
+          >
+            <ProviderLogo
+              src={providerLogos[provider]?.icon}
+              alt={`${provider} logo`}
+              active={selectedProvider === provider}
+            />
+            {provider}
+          </ProviderTab>
+        ))}
+      </ProviderTabs>
+
+      {Object.entries(services).map(([category, serviceList]) => (
+        <CategorySection key={category}>
+          <CategoryHeader>
+            <CategoryIcon>{categoryIcons[category] || '📦'}</CategoryIcon>
+            <CategoryTitle>{categoryNames[category] || category}</CategoryTitle>
+          </CategoryHeader>
+
+          <ServiceGrid>
+            {serviceList.map(service => (
+              <ServiceCard key={service.name}>
+                <ServiceHeader>
+                  <ServiceName>{service.name}</ServiceName>
+                  <ServiceCost>${service.baseCost}/mo</ServiceCost>
+                </ServiceHeader>
+
+                <ServiceDescription>
+                  {service.description || 'Learn about this cloud service and how to use it effectively in your architecture.'}
+                </ServiceDescription>
+
+                <ServiceTags>
+                  <ServiceTag>{category}</ServiceTag>
+                  {service.features && service.features.slice(0, 2).map((feature, idx) => (
+                    <ServiceTag key={idx}>{feature}</ServiceTag>
+                  ))}
+                </ServiceTags>
+              </ServiceCard>
+            ))}
+          </ServiceGrid>
+        </CategorySection>
+      ))}
+
+      {Object.keys(services).length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+          <h3>Coming Soon</h3>
+          <p>Services for {selectedProvider} will be available soon!</p>
+        </div>
+      )}
+    </PageContainer>
+  );
+};
+
+export default LearnPage;

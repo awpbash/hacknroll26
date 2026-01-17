@@ -1,0 +1,28 @@
+{
+  "name": "cloudarch-leetcode",
+  "version": "1.0.0",
+  "description": "Learn cloud architecture like LeetCode - drag and drop cloud components to solve challenges",
+  "scripts": {
+    "install-all": "cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "init-data": "curl -X POST http://localhost:5000/api/challenges/initialize"
+  },
+  "keywords": [
+    "cloud",
+    "architecture",
+    "learning",
+    "hackathon",
+    "leetcode",
+    "aws",
+    "azure",
+    "gcp"
+  ],
+  "author": "CloudArch Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

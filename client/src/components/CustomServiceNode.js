@@ -1,0 +1,353 @@
+import React, { memo, useState } from 'react';
+import { Handle, Position, NodeResizer } from 'reactflow';
+import styled from 'styled-components';
+import { getServiceIcon } from '../data/providerLogos';
+
+const NodeContainer = styled.div`
+  background: ${props => props.bgColor || 'var(--bg-tertiary)'};
+  border: 2px solid ${props => props.borderColor || 'rgba(255, 255, 255, 0.3)'};
+  border-radius: 12px;
+  padding: 14px;
+  min-width: 200px;
+  min-height: 140px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s;
+  position: relative;
+
+  &:hover {
+    box-shadow: var(--shadow-lg), ${props => props.glowColor || 'var(--glow-primary)'};
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  &.selected {
+    border-color: white;
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const NodeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+`;
+
+const ServiceIcon = styled.div`
+  font-size: 28px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+`;
+
+const TitleSection = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ServiceName = styled.div`
+  font-weight: 700;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const CustomLabel = styled.input`
+  font-weight: 600;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  outline: none;
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-style: italic;
+
+  &:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+  }
+`;
+
+const InfoSection = styled.div`
+  margin-bottom: 10px;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const NodeCost = styled.div`
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+`;
+
+const ServiceSpecs = styled.div`
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 4px;
+`;
+
+const IOSection = styled.div`
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+`;
+
+const IOLabel = styled.div`
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+`;
+
+const IOInput = styled.input`
+  width: 100%;
+  padding: 5px 7px;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+  outline: none;
+  margin-bottom: 6px;
+
+  &:focus {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+  }
+`;
+
+const GroupBadge = styled.div`
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--bg-primary);
+`;
+
+const ExistingBadge = styled.div`
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--bg-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &::before {
+    content: '🏢';
+    font-size: 12px;
+  }
+`;
+
+const HandleStyle = {
+  background: 'white',
+  width: 12,
+  height: 12,
+  border: '2px solid rgba(0, 0, 0, 0.3)',
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+};
+
+// Service category colors
+const getCategoryColor = (category) => {
+  const colors = {
+    compute: '#FF9900',
+    storage: '#10b981',
+    database: '#8b5cf6',
+    networking: '#0078D4',
+    serverless: '#f59e0b',
+    ai: '#ef4444',
+    messaging: '#06b6d4',
+    cache: '#ec4899'
+  };
+  return colors[category] || '#6366f1';
+};
+
+// Service category icons
+const getCategoryIcon = (category) => {
+  const icons = {
+    compute: '⚡',
+    storage: '💾',
+    database: '🗄️',
+    networking: '🌐',
+    serverless: '☁️',
+    ai: '🤖',
+    messaging: '📨',
+    cache: '⚡'
+  };
+  return icons[category] || '📦';
+};
+
+const CustomServiceNode = ({ data, selected }) => {
+  const [customLabel, setCustomLabel] = useState(data.customLabel || '');
+  const [inputSpec, setInputSpec] = useState(data.inputSpec || '');
+  const [outputSpec, setOutputSpec] = useState(data.outputSpec || '');
+
+  const handleLabelChange = (e) => {
+    const newLabel = e.target.value;
+    setCustomLabel(newLabel);
+    if (data.onLabelChange) {
+      data.onLabelChange(newLabel);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const newInput = e.target.value;
+    setInputSpec(newInput);
+    if (data.onInputChange) {
+      data.onInputChange(newInput);
+    }
+  };
+
+  const handleOutputChange = (e) => {
+    const newOutput = e.target.value;
+    setOutputSpec(newOutput);
+    if (data.onOutputChange) {
+      data.onOutputChange(newOutput);
+    }
+  };
+
+  const bgColor = getCategoryColor(data.category);
+  const icon = getServiceIcon(data.serviceName, data.category);
+  const isImageIcon = typeof icon === 'string' && (icon.startsWith('http') || icon.startsWith('data:'));
+
+  return (
+    <NodeContainer
+      bgColor={bgColor}
+      glowColor={`0 0 20px ${bgColor}`}
+      borderColor={selected ? 'white' : 'rgba(255, 255, 255, 0.3)'}
+      className={selected ? 'selected' : ''}
+    >
+      <NodeResizer
+        color="white"
+        isVisible={selected && !data.isExisting}
+        minWidth={200}
+        minHeight={140}
+      />
+
+      {data.isExisting && <ExistingBadge>Existing</ExistingBadge>}
+      {data.groupId && <GroupBadge>Group {data.groupId}</GroupBadge>}
+
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={HandleStyle}
+      />
+
+      <NodeHeader>
+        <ServiceIcon>
+          {isImageIcon ? <img src={icon} alt={data.serviceName} /> : icon}
+        </ServiceIcon>
+        <TitleSection>
+          <ServiceName title={data.serviceName}>
+            {data.serviceName}
+          </ServiceName>
+          <CustomLabel
+            value={customLabel}
+            onChange={handleLabelChange}
+            placeholder="Add custom label..."
+            title="Add a custom label to identify this service instance"
+            disabled={data.isExisting}
+            style={{ opacity: data.isExisting ? 0.7 : 1 }}
+          />
+        </TitleSection>
+      </NodeHeader>
+
+      <InfoSection>
+        <InfoRow>
+          <NodeCost>${data.cost}/mo</NodeCost>
+        </InfoRow>
+        <ServiceSpecs title={data.specs}>{data.specs}</ServiceSpecs>
+      </InfoSection>
+
+      <IOSection>
+        <IOLabel>Input</IOLabel>
+        <IOInput
+          value={inputSpec}
+          onChange={handleInputChange}
+          placeholder="e.g., User queries, HTTP requests..."
+          disabled={data.isExisting}
+          style={{ opacity: data.isExisting ? 0.7 : 1 }}
+        />
+
+        <IOLabel>Output</IOLabel>
+        <IOInput
+          value={outputSpec}
+          onChange={handleOutputChange}
+          placeholder="e.g., Vector embeddings, API responses..."
+          disabled={data.isExisting}
+          style={{ opacity: data.isExisting ? 0.7 : 1 }}
+        />
+      </IOSection>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={HandleStyle}
+      />
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ ...HandleStyle, right: -6 }}
+      />
+
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ ...HandleStyle, left: -6 }}
+      />
+    </NodeContainer>
+  );
+};
+
+export default memo(CustomServiceNode);
