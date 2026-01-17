@@ -114,7 +114,6 @@ const ProviderLogo = styled.img<ProviderLogoProps>`
   width: 24px;
   height: 24px;
   object-fit: contain;
-  filter: ${props => props.active ? 'brightness(0) invert(1)' : 'brightness(1)'};
 `;
 
 const CategoryTabs = styled.div`
