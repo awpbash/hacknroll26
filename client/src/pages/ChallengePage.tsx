@@ -88,16 +88,55 @@ const ContentContainer = styled.div`
 
 const LeftPanel = styled.div`
   background: var(--bg-secondary);
-  padding: 28px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   max-height: 800px;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   @media (max-width: 1200px) {
     max-height: none;
   }
+`;
+
+const TabBar = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 20px 20px 0 20px;
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+`;
+
+interface TabButtonProps {
+  active: boolean;
+}
+
+const TabButton = styled.button<TabButtonProps>`
+  padding: 12px 20px;
+  background: ${props => props.active ? 'var(--bg-tertiary)' : 'transparent'};
+  color: ${props => props.active ? 'var(--text-primary)' : 'var(--text-secondary)'};
+  border: none;
+  border-bottom: 3px solid ${props => props.active ? 'var(--accent-primary)' : 'transparent'};
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: ${props => props.active ? '600' : '500'};
+  transition: all 0.2s;
+  position: relative;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: -2px;
+
+  &:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+`;
+
+const TabContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
 `;
 
 const RightPanel = styled.div`
@@ -350,6 +389,159 @@ const LoadingContainer = styled.div`
   font-size: 18px;
 `;
 
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+`;
+
+const EmptyStateIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+`;
+
+const EmptyStateText = styled.div`
+  font-size: 16px;
+  line-height: 1.6;
+`;
+
+const MarkdownContent = styled.div`
+  color: var(--text-secondary);
+  line-height: 1.8;
+
+  h2 {
+    color: var(--text-primary);
+    font-size: 20px;
+    margin: 24px 0 12px 0;
+    font-weight: 600;
+  }
+
+  h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    margin: 20px 0 10px 0;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 12px 0;
+  }
+
+  ul, ol {
+    margin: 12px 0;
+    padding-left: 24px;
+  }
+
+  li {
+    margin: 8px 0;
+  }
+
+  code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 14px;
+    color: var(--accent-primary);
+  }
+
+  pre {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+    border: 1px solid var(--border-color);
+
+    code {
+      background: none;
+      padding: 0;
+      color: var(--text-primary);
+    }
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+`;
+
+const SolutionCard = styled.div`
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+`;
+
+const SolutionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const SolutionTitle = styled.h4`
+  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 600;
+`;
+
+const SolutionMeta = styled.div`
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+`;
+
+const SolutionStats = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+`;
+
+const SolutionStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+
+  span {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+`;
+
+const UpvoteButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+
+  &:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+`;
+
 interface EvaluationResult {
   passed: boolean;
   score: number;
@@ -368,6 +560,85 @@ interface SubmissionResult {
   status: string;
   evaluation: EvaluationResult;
 }
+
+// Editorial Panel Component
+interface EditorialPanelProps {
+  challenge: Challenge;
+}
+
+const EditorialPanel: React.FC<EditorialPanelProps> = ({ challenge }) => {
+  if (!challenge.editorial) {
+    return (
+      <EmptyState>
+        <EmptyStateIcon>📝</EmptyStateIcon>
+        <EmptyStateText>
+          Editorial coming soon!
+          <br />
+          Check back later for detailed explanations and approaches.
+        </EmptyStateText>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <MarkdownContent dangerouslySetInnerHTML={{ __html: challenge.editorial }} />
+  );
+};
+
+// Solutions Panel Component
+interface SolutionsPanelProps {
+  challenge: Challenge;
+}
+
+const SolutionsPanel: React.FC<SolutionsPanelProps> = ({ challenge }) => {
+  if (!challenge.solutions || challenge.solutions.length === 0) {
+    return (
+      <EmptyState>
+        <EmptyStateIcon>💡</EmptyStateIcon>
+        <EmptyStateText>
+          No community solutions yet.
+          <br />
+          Be the first to submit a solution to this challenge!
+        </EmptyStateText>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <>
+      {challenge.solutions.map((solution) => (
+        <SolutionCard key={solution.id}>
+          <SolutionHeader>
+            <div>
+              <SolutionTitle>{solution.title}</SolutionTitle>
+              <SolutionMeta>
+                <span>by {solution.author}</span>
+                <span>•</span>
+                <span>{solution.provider}</span>
+              </SolutionMeta>
+            </div>
+            <UpvoteButton>
+              ▲ {solution.upvotes}
+            </UpvoteButton>
+          </SolutionHeader>
+
+          <SolutionStats>
+            <SolutionStat>
+              Cost: <span>${solution.totalCost}/mo</span>
+            </SolutionStat>
+            <SolutionStat>
+              Services: <span>{solution.architecture.nodes.length}</span>
+            </SolutionStat>
+          </SolutionStats>
+
+          <Section style={{ marginTop: '16px' }}>
+            <MarkdownContent dangerouslySetInnerHTML={{ __html: solution.explanation }} />
+          </Section>
+        </SolutionCard>
+      ))}
+    </>
+  );
+};
 
 // Mock evaluation function
 const evaluateArchitecture = (challenge: Challenge, architecture: ArchitectureState, provider: CloudProvider): EvaluationResult => {
@@ -594,33 +865,57 @@ const ChallengePage: React.FC = () => {
 
       <ContentContainer>
         <LeftPanel>
-          <Section>
-            <SectionTitle icon="📋">Description</SectionTitle>
-            <Description>{challenge.description}</Description>
-          </Section>
+          <TabBar>
+            <TabButton
+              active={activeTab === 'description'}
+              onClick={() => setActiveTab('description')}
+            >
+              Description
+            </TabButton>
+            <TabButton
+              active={activeTab === 'editorial'}
+              onClick={() => setActiveTab('editorial')}
+            >
+              Editorial
+            </TabButton>
+            <TabButton
+              active={activeTab === 'solutions'}
+              onClick={() => setActiveTab('solutions')}
+            >
+              Solutions
+            </TabButton>
+          </TabBar>
 
-          <Section>
-            <SectionTitle icon="✅">Requirements</SectionTitle>
-            <RequirementsList>
-              {challenge.requirements.map((req: string, index: number) => (
-                <RequirementItem key={index}>{req}</RequirementItem>
-              ))}
-            </RequirementsList>
-          </Section>
+          <TabContent>
+            {activeTab === 'description' && (
+              <>
+                <Section>
+                  <SectionTitle icon="📋">Description</SectionTitle>
+                  <Description>{challenge.description}</Description>
+                </Section>
 
-          <Section>
-            <SectionTitle icon="⚙️">Constraints</SectionTitle>
-            <ConstraintBox>
-              <ConstraintItem>
-                Max Budget: <span>${challenge.constraints.maxCost}/month</span>
-              </ConstraintItem>
-              {challenge.constraints.requiredServices && (
-                <ConstraintItem>
-                  Required: <span>{challenge.constraints.requiredServices.join(', ')}</span>
-                </ConstraintItem>
-              )}
-            </ConstraintBox>
-          </Section>
+                <Section>
+                  <SectionTitle icon="✅">Requirements</SectionTitle>
+                  <RequirementsList>
+                    {challenge.requirements.map((req: string, index: number) => (
+                      <RequirementItem key={index}>{req}</RequirementItem>
+                    ))}
+                  </RequirementsList>
+                </Section>
+
+                <Section>
+                  <SectionTitle icon="⚙️">Constraints</SectionTitle>
+                  <ConstraintBox>
+                    <ConstraintItem>
+                      Max Budget: <span>${challenge.constraints.maxCost}/month</span>
+                    </ConstraintItem>
+                    {challenge.constraints.requiredServices && (
+                      <ConstraintItem>
+                        Required: <span>{challenge.constraints.requiredServices.join(', ')}</span>
+                      </ConstraintItem>
+                    )}
+                  </ConstraintBox>
+                </Section>
 
           {challenge.existingInfrastructure && (
             <Section>

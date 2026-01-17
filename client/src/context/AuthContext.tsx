@@ -1,13 +1,14 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { getMockUser, setMockUser, removeMockUser, MockUser } from '../data/mockData';
+import { authAPI } from '../services/api';
+import { AxiosError } from 'axios';
 
 // User interface
 export interface User {
   id: string | number;
   username: string;
   email: string;
-  totalScore: number;
-  solvedCount: number;
+  totalScore?: number;
+  solvedCount?: number;
 }
 
 // Login credentials interface
@@ -24,21 +25,6 @@ export interface RegisterData {
 }
 
 // Auth response interface
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
 export interface AuthResponse {
   success: boolean;
   message?: string;
@@ -75,46 +61,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Load user from localStorage
-    const savedUser = getMockUser();
-    if (savedUser) {
-      setUser(savedUser as User);
+    // Load user from token
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Verify token and load user
+      authAPI.getCurrentUser()
+        .then(response => {
+          setUser(response.data);
+          setLoading(false);
+        })
+        .catch(() => {
+          // Token invalid or expired
+          localStorage.removeItem('token');
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    // Mock login - accept any email/password
-    const mockUser: User = {
-      id: Date.now(),
-      username: credentials.email.split('@')[0],
-      email: credentials.email,
-      totalScore: 2150,
-      solvedCount: 3
-    };
+    try {
+      const response = await authAPI.login(credentials);
+      const { token, user } = response.data;
 
-    setMockUser(mockUser as MockUser);
-    setUser(mockUser);
-    return { success: true };
+      if (token && user) {
+        localStorage.setItem('token', token);
+        setUser(user);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Invalid response from server' };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.message || 'Login failed. Please try again.'
+      };
+    }
   };
 
   const register = async (userData: RegisterData): Promise<AuthResponse> => {
-    // Mock registration
-    const mockUser: User = {
-      id: Date.now(),
-      username: userData.username,
-      email: userData.email,
-      totalScore: 0,
-      solvedCount: 0
-    };
+    try {
+      const response = await authAPI.register(userData);
+      const { token, user } = response.data;
 
-    setMockUser(mockUser as MockUser);
-    setUser(mockUser);
-    return { success: true };
+      if (token && user) {
+        localStorage.setItem('token', token);
+        setUser(user);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Invalid response from server' };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.message || 'Registration failed. Please try again.'
+      };
+    }
   };
 
   const logout = (): void => {
-    removeMockUser();
+    localStorage.removeItem('token');
     setUser(null);
   };
 
