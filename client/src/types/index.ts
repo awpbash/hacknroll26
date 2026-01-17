@@ -10,9 +10,9 @@ export interface CloudService {
   name: string;
   provider: CloudProvider;
   category: ServiceCategory;
-  baseCost: number;
+  cost: number;
   specs?: string;
-  description: string;
+  description?: string;
   inputSpec?: string;
   outputSpec?: string;
 }

@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ArchitectureBuilder from '../components/ArchitectureBuilder';
 import { mockChallenges } from '../data/mockData';
-import { cloudServices } from '../data/cloudServices';
+import { fetchCloudServices } from '../services/cloudServicesApi';
 import { useAuth } from '../context/AuthContext';
 import { providerLogos } from '../data/providerLogos';
-import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, ArchitectureEdge } from '../types';
+import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, ArchitectureEdge, CloudServicesData } from '../types';
+import { formatPrice, formatToSignificantFigures } from '../utils/formatting';
 
 const PageContainer = styled.div`
   max-width: 100%;
@@ -641,9 +642,9 @@ const evaluateArchitecture = (challenge: Challenge, architecture: ArchitectureSt
 
   // Check max cost constraint
   if (challenge.constraints.maxCost && totalCost > challenge.constraints.maxCost) {
-    errors.push(`Cost ($${totalCost.toFixed(2)}/month) exceeds budget ($${challenge.constraints.maxCost}/month)`);
+    errors.push(`Cost ($${formatToSignificantFigures(totalCost)}/month) exceeds budget ($${formatToSignificantFigures(challenge.constraints.maxCost)}/month)`);
   } else {
-    feedback.push(`Cost optimization: Excellent! Your solution costs $${totalCost.toFixed(2)}/month`);
+    feedback.push(`Cost optimization: Excellent! Your solution costs $${formatToSignificantFigures(totalCost)}/month`);
     score += 30;
   }
 
@@ -749,7 +750,21 @@ const ChallengePage: React.FC = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [result, setResult] = useState<SubmissionResult | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'description' | 'editorial' | 'solutions'>('description');
+  const [cloudServices, setCloudServices] = useState<CloudServicesData | null>(null);
+  const [activeTab, setActiveTab] = useState<'description'| 'editorial' | 'solutions'>('description')
+
+  // Fetch cloud services on mount
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const services = await fetchCloudServices();
+        setCloudServices(services);
+      } catch (err) {
+        console.error('Error loading cloud services:', err);
+      }
+    };
+    loadServices();
+  }, []);
 
   useEffect(() => {
     // Load challenge from mock data
@@ -888,17 +903,23 @@ const ChallengePage: React.FC = () => {
                       Your company already has the following services deployed. Build upon this existing setup:
                     </Description>
                     <ConstraintBox>
-                      {challenge.existingInfrastructure.nodes.map((node: ArchitectureNode) => (
-                        <ConstraintItem key={node.id}>
-                          <span style={{ fontWeight: 600, color: 'var(--accent-success)' }}>
-                            {node.data.serviceName}
-                          </span>
-                          {node.data.customLabel && ` - ${node.data.customLabel}`}
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                            ${node.data.cost}/mo · {node.data.specs}
-                          </div>
-                        </ConstraintItem>
-                      ))}
+                      {challenge.existingInfrastructure.nodes.map((node: ArchitectureNode) => {
+                        // Debug logging
+                        if (!node.data || node.data.cost === undefined) {
+                          console.error('Node with invalid data:', node);
+                        }
+                        return (
+                          <ConstraintItem key={node.id}>
+                            <span style={{ fontWeight: 600, color: 'var(--accent-success)' }}>
+                              {node.data?.serviceName}
+                            </span>
+                            {node.data?.customLabel && ` - ${node.data.customLabel}`}
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                              {formatPrice(node.data?.cost ?? 0, '/mo')} · {node.data?.specs}
+                            </div>
+                          </ConstraintItem>
+                        );
+                      })}
                     </ConstraintBox>
                   </Section>
                 )}
@@ -935,13 +956,19 @@ const ChallengePage: React.FC = () => {
             ))}
           </ProviderSelector>
 
-          <ArchitectureBuilder
-            provider={selectedProvider}
-            services={cloudServices as any}
-            onArchitectureChange={setArchitecture}
-            initialNodes={challenge?.existingInfrastructure?.nodes || []}
-            initialEdges={challenge?.existingInfrastructure?.edges || []}
-          />
+          {cloudServices ? (
+            <ArchitectureBuilder
+              provider={selectedProvider}
+              services={cloudServices as any}
+              onArchitectureChange={setArchitecture}
+              initialNodes={challenge?.existingInfrastructure?.nodes || []}
+              initialEdges={challenge?.existingInfrastructure?.edges || []}
+            />
+          ) : (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              Loading services...
+            </div>
+          )}
 
           <SubmitButton
             onClick={handleSubmit}
@@ -965,7 +992,7 @@ const ChallengePage: React.FC = () => {
             </StatBox>
             <StatBox>
               <StatLabel>Total Cost</StatLabel>
-              <StatValue>${result.evaluation.totalCost.toFixed(2)}/mo</StatValue>
+              <StatValue>${formatToSignificantFigures(result.evaluation.totalCost)}/mo</StatValue>
             </StatBox>
             <StatBox>
               <StatLabel>Services Used</StatLabel>

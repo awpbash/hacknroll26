@@ -17,7 +17,9 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import styled from 'styled-components';
 import CustomServiceNode, { CustomServiceNodeData } from './CustomServiceNode';
+import ServiceDetailsModal from './ServiceDetailsModal';
 import { CloudService, CloudProvider, ServiceCategory, ArchitectureState, ArchitectureNode, ArchitectureEdge } from '../types';
+import { formatPrice } from '../utils/formatting';
 
 interface CategoryTitleProps {
   icon?: string;
@@ -98,6 +100,9 @@ const ServiceCard = styled.div<ServiceCardProps>`
 const ServiceName = styled.div`
   font-weight: 700;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const ServiceInfo = styled.div`
@@ -106,6 +111,40 @@ const ServiceInfo = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 8px;
+`;
+
+const InfoButton = styled.button`
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  transition: all 0.2s;
+  padding: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 `;
 
 const FlowContainer = styled.div`
@@ -200,6 +239,7 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [nextGroupId, setNextGroupId] = useState<number>(1);
   const [initialized, setInitialized] = useState<boolean>(false);
+  const [selectedService, setSelectedService] = useState<{service: CloudService, category: ServiceCategory} | null>(null);
 
   const nodeTypes: NodeTypes = useMemo(() => ({
     serviceNode: CustomServiceNode
@@ -208,7 +248,43 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
   // Initialize with existing infrastructure
   useEffect(() => {
     if (!initialized && (initialNodes.length > 0 || initialEdges.length > 0)) {
-      setNodes(initialNodes);
+      // Transform initialNodes to add callback functions
+      const nodesWithCallbacks = initialNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          cost: node.data.cost ?? 0, // Ensure cost is defined
+          onLabelChange: (label: string) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === node.id
+                  ? { ...n, data: { ...n.data, customLabel: label } }
+                  : n
+              )
+            );
+          },
+          onInputChange: (input: string) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === node.id
+                  ? { ...n, data: { ...n.data, inputSpec: input } }
+                  : n
+              )
+            );
+          },
+          onOutputChange: (output: string) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === node.id
+                  ? { ...n, data: { ...n.data, outputSpec: output } }
+                  : n
+              )
+            );
+          }
+        }
+      }));
+
+      setNodes(nodesWithCallbacks);
       setEdges(initialEdges);
       setInitialized(true);
     }
@@ -266,7 +342,7 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
           serviceName: serviceData.name,
           customLabel: '',
           category: serviceData.category,
-          cost: serviceData.baseCost,
+          cost: serviceData.cost,
           specs: serviceData.specs,
           description: serviceData.description,
           inputSpec: '',
@@ -383,9 +459,22 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
                   draggable
                   onDragStart={(e) => onDragStart(e, service)}
                 >
-                  <ServiceName>{service.name}</ServiceName>
+                  <ServiceName>
+                    <span>{service.name}</span>
+                    <InfoButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSelectedService({ service, category: category as ServiceCategory });
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      title="View service details"
+                    >
+                      i
+                    </InfoButton>
+                  </ServiceName>
                   <ServiceInfo>
-                    <span>${service.baseCost}/mo</span>
+                    <span>{formatPrice(service.cost, '/mo')}</span>
                     <span>{service.specs}</span>
                   </ServiceInfo>
                 </ServiceCard>
@@ -448,6 +537,14 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
           />
         </ReactFlow>
       </FlowContainer>
+
+      {selectedService && (
+        <ServiceDetailsModal
+          service={selectedService.service}
+          category={selectedService.category}
+          onClose={() => setSelectedService(null)}
+        />
+      )}
     </BuilderContainer>
   );
 };

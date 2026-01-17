@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { cloudServices } from '../data/cloudServices';
+import { fetchCloudServices } from '../services/cloudServicesApi';
 import { providerLogos } from '../data/providerLogos';
-import { CloudProvider, CloudService } from '../types';
+import { CloudProvider, CloudService, CloudServicesData, ServiceCategory } from '../types';
+import ServiceDetailsModal from '../components/ServiceDetailsModal';
+import { formatPrice } from '../utils/formatting';
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -62,6 +64,11 @@ const ProviderTab = styled.button<ProviderTabProps>`
     transform: translateY(-2px);
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-md);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -203,6 +210,55 @@ const ServiceTag = styled.span`
   font-weight: 600;
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: var(--text-secondary);
+`;
+
+const ErrorContainer = styled.div`
+  background: var(--bg-secondary);
+  border: 2px solid #ff4444;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  max-width: 600px;
+  margin: 40px auto;
+`;
+
+const ErrorTitle = styled.h3`
+  color: #ff4444;
+  font-size: 20px;
+  margin: 0 0 12px 0;
+`;
+
+const ErrorText = styled.p`
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+`;
+
 interface CategoryIcons {
   [key: string]: string;
 }
@@ -214,6 +270,10 @@ interface CategoryNames {
 const LearnPage: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | 'All'>('AWS');
   const [selectedCategory, setSelectedCategory] = useState<string>('compute');
+  const [cloudServices, setCloudServices] = useState<CloudServicesData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<{service: CloudService, category: ServiceCategory} | null>(null);
 
   const providers: (CloudProvider | 'All')[] = ['All', 'AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'];
 
@@ -223,7 +283,9 @@ const LearnPage: React.FC = () => {
     database: '🗄️',
     networking: '🌐',
     ai: '🤖',
-    serverless: '☁️'
+    serverless: '☁️',
+    cache: '🔄',
+    messaging: '💬'
   };
 
   const categoryNames: CategoryNames = {
@@ -236,6 +298,61 @@ const LearnPage: React.FC = () => {
     cache: 'Caching Services',
     messaging: 'Messaging Services'
   };
+
+  // Fetch cloud services on component mount
+  useEffect(() => {
+    const loadCloudServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const services = await fetchCloudServices();
+        setCloudServices(services);
+      } catch (err) {
+        setError('Failed to load cloud services. Please try again later.');
+        console.error('Error loading cloud services:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCloudServices();
+  }, []);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <PageContainer>
+        <Header>
+          <Title>Learn Cloud Services</Title>
+          <Subtitle>
+            Explore and understand cloud services from major providers
+          </Subtitle>
+        </Header>
+        <LoadingContainer>
+          <LoadingSpinner />
+          <LoadingText>Loading cloud services...</LoadingText>
+        </LoadingContainer>
+      </PageContainer>
+    );
+  }
+
+  // Show error state
+  if (error || !cloudServices) {
+    return (
+      <PageContainer>
+        <Header>
+          <Title>Learn Cloud Services</Title>
+          <Subtitle>
+            Explore and understand cloud services from major providers
+          </Subtitle>
+        </Header>
+        <ErrorContainer>
+          <ErrorTitle>⚠️ Error Loading Services</ErrorTitle>
+          <ErrorText>{error || 'Unable to load cloud services data.'}</ErrorText>
+        </ErrorContainer>
+      </PageContainer>
+    );
+  }
 
   // Get all available categories across all providers
   const allCategories = Array.from(
@@ -322,10 +439,15 @@ const LearnPage: React.FC = () => {
 
           <ServiceGrid>
             {serviceList.map((service: CloudService) => (
-              <ServiceCard key={service.name}>
+              <ServiceCard
+                key={service.id}
+                onClick={() => setSelectedService({ service, category: category as ServiceCategory })}
+              >
                 <ServiceHeader>
                   <ServiceName>{service.name}</ServiceName>
-                  <ServiceCost>${service.baseCost}/mo</ServiceCost>
+                  <ServiceCost>
+                    {formatPrice(service.cost, '/mo')}
+                  </ServiceCost>
                 </ServiceHeader>
 
                 <ServiceDescription>
@@ -333,10 +455,8 @@ const LearnPage: React.FC = () => {
                 </ServiceDescription>
 
                 <ServiceTags>
-                  <ServiceTag>{category}</ServiceTag>
-                  {(service as any).features && (service as any).features.slice(0, 2).map((feature: string, idx: number) => (
-                    <ServiceTag key={idx}>{feature}</ServiceTag>
-                  ))}
+                  <ServiceTag>{service.provider}</ServiceTag>
+                  <ServiceTag>{service.specs}</ServiceTag>
                 </ServiceTags>
               </ServiceCard>
             ))}
@@ -349,6 +469,14 @@ const LearnPage: React.FC = () => {
           <h3>Coming Soon</h3>
           <p>Services for {selectedProvider} will be available soon!</p>
         </div>
+      )}
+
+      {selectedService && (
+        <ServiceDetailsModal
+          service={selectedService.service}
+          category={selectedService.category}
+          onClose={() => setSelectedService(null)}
+        />
       )}
     </PageContainer>
   );
