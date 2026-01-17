@@ -3,6 +3,7 @@ import { Handle, Position, NodeResizer, NodeProps } from 'reactflow';
 import styled from 'styled-components';
 import { getServiceIcon } from '../data/providerLogos';
 import { ServiceCategory } from '../types';
+import { formatPrice } from '../utils/formatting';
 
 interface NodeContainerProps {
   bgColor?: string;
@@ -319,7 +320,7 @@ const CustomServiceNode: React.FC<CustomServiceNodeProps> = ({ data, selected })
 
       <InfoSection>
         <InfoRow>
-          <NodeCost>${data.cost}/mo</NodeCost>
+          <NodeCost>{formatPrice(data.cost, '/mo')}</NodeCost>
         </InfoRow>
         <ServiceSpecs title={data.specs}>{data.specs}</ServiceSpecs>
       </InfoSection>

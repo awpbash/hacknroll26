@@ -12,7 +12,7 @@ export interface CloudService {
   category: ServiceCategory;
   baseCost: number;
   specs?: string;
-  description: string;
+  description?: string;
   inputSpec?: string;
   outputSpec?: string;
 }
