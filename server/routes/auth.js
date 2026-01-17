@@ -20,8 +20,10 @@ router.post('/register', [
     const { username, email, password } = req.body;
 
     // Check if user exists
-    let user = await User.findOne({ $or: [{ email }, { username }] });
-    if (user) {
+    const existingEmail = await User.findByEmail(email);
+    const existingUsername = await User.findByUsername(username);
+
+    if (existingEmail || existingUsername) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -30,17 +32,15 @@ router.post('/register', [
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
-    user = new User({
+    const user = await User.create({
       username,
       email,
       password: hashedPassword
     });
 
-    await user.save();
-
     // Create JWT token
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user.id },
       process.env.JWT_SECRET || 'your_jwt_secret',
       { expiresIn: '7d' }
     );
@@ -48,7 +48,7 @@ router.post('/register', [
     res.status(201).json({
       token,
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         email: user.email
       }
@@ -73,7 +73,7 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Check if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -86,7 +86,7 @@ router.post('/login', [
 
     // Create JWT token
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user.id },
       process.env.JWT_SECRET || 'your_jwt_secret',
       { expiresIn: '7d' }
     );
@@ -94,11 +94,11 @@ router.post('/login', [
     res.json({
       token,
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         email: user.email,
         totalScore: user.totalScore,
-        solvedChallenges: user.solvedChallenges.length
+        solvedChallenges: user.solvedChallenges?.length || 0
       }
     });
   } catch (error) {
@@ -116,13 +116,15 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    const user = await User.findById(decoded.userId).select('-password');
+    const user = await User.findById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });
   }

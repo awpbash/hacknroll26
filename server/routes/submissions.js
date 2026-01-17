@@ -66,7 +66,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Create submission record
-    const submission = new Submission({
+    const submission = await Submission.create({
       userId: req.userId,
       challengeId,
       architecture,
@@ -75,53 +75,58 @@ router.post('/', authenticateToken, async (req, res) => {
       status: evaluation.status
     });
 
-    await submission.save();
-
     // Update challenge statistics
-    challenge.submissions += 1;
-    if (evaluation.passed) {
-      challenge.accepted += 1;
-    }
-    challenge.acceptanceRate = (challenge.accepted / challenge.submissions) * 100;
-    await challenge.save();
+    await Challenge.incrementSubmissions(challengeId, evaluation.passed);
 
     // Update user record if accepted
     if (evaluation.passed) {
       const user = await User.findById(req.userId);
 
       // Check if user already solved this challenge
-      const existingSolution = user.solvedChallenges.find(
-        sc => sc.challengeId.toString() === challengeId
+      const existingSolution = user.solvedChallenges?.find(
+        sc => sc.challengeId === challengeId
       );
 
       if (existingSolution) {
         // Update if new solution is better
         if (evaluation.score > existingSolution.complexity) {
-          existingSolution.architectureData = architecture;
-          existingSolution.cost = evaluation.cost;
-          existingSolution.complexity = evaluation.complexity;
-          existingSolution.timestamp = new Date();
+          // Find and update the existing solution in the array
+          const updatedSolutions = user.solvedChallenges.map(sc => {
+            if (sc.challengeId === challengeId) {
+              return {
+                challengeId,
+                architectureData: architecture,
+                cost: evaluation.cost,
+                complexity: evaluation.complexity,
+                timestamp: new Date()
+              };
+            }
+            return sc;
+          });
 
-          // Update total score
-          user.totalScore = user.solvedChallenges.reduce((sum, sc) => sum + (sc.complexity || 0), 0);
+          // Recalculate total score
+          const totalScore = updatedSolutions.reduce((sum, sc) => sum + (sc.complexity || 0), 0);
+
+          await User.updateById(req.userId, {
+            solvedChallenges: updatedSolutions,
+            totalScore
+          });
         }
       } else {
         // Add new solution
-        user.solvedChallenges.push({
+        await User.addSolvedChallenge(req.userId, {
           challengeId,
           architectureData: architecture,
           cost: evaluation.cost,
-          complexity: evaluation.complexity
+          complexity: evaluation.complexity,
+          score: evaluation.score
         });
-        user.totalScore += evaluation.score;
       }
-
-      await user.save();
     }
 
     res.json({
       submission: {
-        id: submission._id,
+        id: submission.id,
         status: submission.status,
         evaluation: submission.evaluation
       }
@@ -135,10 +140,10 @@ router.post('/', authenticateToken, async (req, res) => {
 // Get user's submissions for a challenge
 router.get('/challenge/:challengeId', authenticateToken, async (req, res) => {
   try {
-    const submissions = await Submission.find({
-      userId: req.userId,
-      challengeId: req.params.challengeId
-    }).sort({ createdAt: -1 });
+    const submissions = await Submission.getUserChallengeSubmissions(
+      req.userId,
+      req.params.challengeId
+    );
 
     res.json(submissions);
   } catch (error) {
@@ -150,12 +155,25 @@ router.get('/challenge/:challengeId', authenticateToken, async (req, res) => {
 // Get user's all submissions
 router.get('/my-submissions', authenticateToken, async (req, res) => {
   try {
-    const submissions = await Submission.find({ userId: req.userId })
-      .populate('challengeId', 'title difficulty category')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const submissions = await Submission.getUserSubmissions(req.userId, 50);
 
-    res.json(submissions);
+    // Manually populate challenge data
+    const populatedSubmissions = await Promise.all(
+      submissions.map(async (submission) => {
+        const challenge = await Challenge.findById(submission.challengeId);
+        return {
+          ...submission,
+          challenge: challenge ? {
+            id: challenge.id,
+            title: challenge.title,
+            difficulty: challenge.difficulty,
+            category: challenge.category
+          } : null
+        };
+      })
+    );
+
+    res.json(populatedSubmissions);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
