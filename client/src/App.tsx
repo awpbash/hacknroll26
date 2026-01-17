@@ -11,6 +11,7 @@ import ChallengesListPage from './pages/ChallengesListPage';
 import ChallengePage from './pages/ChallengePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import LearnPage from './pages/LearnPage';
+import QuestModePage from './pages/QuestModePage';
 import GlobalStyles from './styles/GlobalStyles';
 
 const App: React.FC = () => {
@@ -29,6 +30,7 @@ const App: React.FC = () => {
               <Route path="/challenge/:id" element={<ChallengePage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/learn" element={<LearnPage />} />
+              <Route path="/quest" element={<QuestModePage />} />
             </Routes>
           </AuthProvider>
         </Router>

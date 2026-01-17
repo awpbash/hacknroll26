@@ -183,6 +183,9 @@ const Navbar: React.FC = () => {
           <NavLink to="/challenges">
             <FaCode /> Challenges
           </NavLink>
+          <NavLink to="/quest">
+            🎯 Quest Mode
+          </NavLink>
           <NavLink to="/learn">
             <FaBook /> Learn
           </NavLink>
