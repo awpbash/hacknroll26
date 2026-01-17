@@ -12,40 +12,21 @@ const adobeAIChallenge = {
 
     <p><strong>Your task:</strong> Design the cloud architecture for this new AI platform.</p>
   `,
-  requirements: `
-    <h3>Core Platform Requirements</h3>
-    <ul>
-      <li>Support real-time AI generation (e.g., image fill, text-to-design)</li>
-      <li>Support asynchronous AI jobs (e.g., video generation, batch rendering)</li>
-      <li>Integrate with Adobe user identity and licensing</li>
-      <li>Enforce AI credit/quota usage per user or organization</li>
-      <li>Store generated assets with versioning and provenance</li>
-      <li>Allow future expansion to additional AI models and tools</li>
-    </ul>
-
-    <h3>Availability & Reliability</h3>
-    <ul>
-      <li>Platform must be highly available</li>
-      <li>No single point of failure</li>
-      <li>Support graceful degradation under GPU shortages</li>
-      <li>Automatic recovery from service failures</li>
-    </ul>
-
-    <h3>Security & Compliance</h3>
-    <ul>
-      <li>Strict tenant isolation (no cross-user or cross-org data leakage)</li>
-      <li>Permission-aware access to prompts and generated assets</li>
-      <li>Full audit logging for AI usage and asset creation</li>
-      <li>Content moderation must be enforced</li>
-    </ul>
-
-    <h3>Performance Targets</h3>
-    <ul>
-      <li><strong>Interactive AI requests:</strong> p95 end-to-end latency < 5 seconds</li>
-      <li><strong>Asynchronous jobs:</strong> Must be queued and processed reliably</li>
-      <li>System must support global users</li>
-    </ul>
-  `,
+  requirements: [
+    "Support real-time AI generation (e.g., image fill, text-to-design) with p95 latency < 5 seconds",
+    "Support asynchronous AI jobs (e.g., video generation, batch rendering) with reliable queue processing",
+    "Integrate with Adobe user identity and licensing system",
+    "Enforce AI credit/quota usage per user or organization",
+    "Store generated assets with versioning and provenance tracking",
+    "Platform must be highly available with no single point of failure",
+    "Support graceful degradation under GPU shortages with automatic recovery",
+    "Implement strict tenant isolation (no cross-user or cross-org data leakage)",
+    "Provide permission-aware access to prompts and generated assets",
+    "Enable full audit logging for AI usage and asset creation",
+    "Enforce content moderation on all generated content",
+    "System must support global users with multi-region capability",
+    "Allow future expansion to additional AI models and tools"
+  ],
   constraints: {
     maxCost: 250000,
     requiredServices: ["compute", "database", "storage", "networking", "messaging", "ai"],

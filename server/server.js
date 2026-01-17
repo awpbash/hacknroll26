@@ -7,6 +7,9 @@ require('./config/firebase');
 
 const app = express();
 
+// Trust proxy - needed for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
