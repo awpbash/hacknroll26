@@ -318,7 +318,7 @@ class ArchitectureEvaluator {
 
     if (nodes.length <= 1) return true;
 
-    // Build adjacency list (treat as undirected)
+    // Build adjacency list (DIRECTED - respecting edge direction)
     const graph = {};
     nodes.forEach(node => {
       graph[node.id] = [];
@@ -326,19 +326,34 @@ class ArchitectureEvaluator {
 
     edges.forEach(edge => {
       graph[edge.source] = graph[edge.source] || [];
-      graph[edge.target] = graph[edge.target] || [];
+      // Only add in the direction of the edge (source -> target)
+      // DO NOT add reverse connection
       graph[edge.source].push(edge.target);
-      graph[edge.target].push(edge.source);
     });
 
-    // BFS from first node
+    // BFS from first node - but only check if graph is weakly connected
+    // (meaning ignoring direction for connectivity check only)
+    // We'll validate directions separately in Phase 2
     const visited = new Set();
     const queue = [nodes[0].id];
     visited.add(nodes[0].id);
 
+    // For connectivity check, treat as undirected temporarily
+    const undirectedGraph = {};
+    nodes.forEach(node => {
+      undirectedGraph[node.id] = [];
+    });
+
+    edges.forEach(edge => {
+      undirectedGraph[edge.source] = undirectedGraph[edge.source] || [];
+      undirectedGraph[edge.target] = undirectedGraph[edge.target] || [];
+      undirectedGraph[edge.source].push(edge.target);
+      undirectedGraph[edge.target].push(edge.source);
+    });
+
     while (queue.length > 0) {
       const current = queue.shift();
-      const neighbors = graph[current] || [];
+      const neighbors = undirectedGraph[current] || [];
 
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
@@ -499,6 +514,14 @@ class ArchitectureEvaluator {
     const complexityCheck = this.validateComplexity();
     if (!complexityCheck.passed) {
       result.errors.push(complexityCheck.error);
+      result.status = 'Wrong Architecture';
+      return result;
+    }
+
+    // 6. Validate data flow direction (STOP on fail) - CRITICAL VALIDATION
+    const dataFlowCheck = this.checkDataFlowDirection();
+    if (!dataFlowCheck.passed) {
+      result.errors.push(dataFlowCheck.error);
       result.status = 'Wrong Architecture';
       return result;
     }
@@ -803,6 +826,95 @@ class ArchitectureEvaluator {
     return { passed: true };
   }
 
+  checkDataFlowDirection() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    // Define typical data flow patterns (what typically SENDS data to what)
+    // Format: { category: [categories it should connect TO] }
+    const dataFlowRules = {
+      'networking': ['compute', 'serverless', 'storage'],  // CDN/LB → compute/storage
+      'compute': ['database', 'storage', 'cache', 'messaging', 'ai'],  // Compute → DB/storage
+      'serverless': ['database', 'storage', 'cache', 'messaging', 'ai'],  // Lambda → DB/storage
+      'messaging': ['serverless', 'compute'],  // Queue → processing
+      'cache': [],  // Cache is queried, doesn't send
+      'database': [],  // Database is queried, doesn't send
+      'storage': [],  // Storage is queried, doesn't send
+      'ai': []  // AI services are queried, don't initiate
+    };
+
+    // Check each edge for logical direction
+    for (const edge of edges) {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+
+      if (!sourceNode || !targetNode) continue;
+
+      const sourceCategory = this.getServiceCategory(sourceNode);
+      const targetCategory = this.getServiceCategory(targetNode);
+
+      if (!sourceCategory || !targetCategory) continue;
+
+      // Check for illogical connections
+      // Database/Storage/Cache should NOT send to networking
+      if (['database', 'storage', 'cache'].includes(sourceCategory) &&
+          ['networking'].includes(targetCategory)) {
+        return {
+          passed: false,
+          warning: `Incorrect data flow: ${this.getCategoryDisplayName(sourceCategory)} should not connect TO ${this.getCategoryDisplayName(targetCategory)}. Data flows FROM networking TO storage/database.`
+        };
+      }
+
+      // Database should not send to compute (compute queries database)
+      if (sourceCategory === 'database' && targetCategory === 'compute') {
+        return {
+          passed: false,
+          warning: 'Incorrect data flow: Database should receive queries from compute, not send to it. Reverse the connection direction.'
+        };
+      }
+
+      // Database should not send to serverless
+      if (sourceCategory === 'database' && targetCategory === 'serverless') {
+        return {
+          passed: false,
+          warning: 'Incorrect data flow: Database should receive queries from Lambda/Functions, not send to it. Reverse the connection direction.'
+        };
+      }
+
+      // Storage should not send to compute/serverless (they read from storage)
+      if (sourceCategory === 'storage' && ['compute', 'serverless'].includes(targetCategory)) {
+        return {
+          passed: false,
+          warning: 'Incorrect data flow: Storage should be read by compute/serverless, not send to it. Reverse the connection direction.'
+        };
+      }
+
+      // Cache should not send to compute/serverless (they query cache)
+      if (sourceCategory === 'cache' && ['compute', 'serverless'].includes(targetCategory)) {
+        return {
+          passed: false,
+          warning: 'Incorrect data flow: Cache should be queried by compute/serverless, not send to it. Reverse the connection direction.'
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  getCategoryDisplayName(category) {
+    const names = {
+      'networking': 'CDN/Load Balancer',
+      'compute': 'Compute (EC2/VM)',
+      'serverless': 'Serverless (Lambda/Functions)',
+      'database': 'Database',
+      'storage': 'Storage',
+      'cache': 'Cache',
+      'messaging': 'Message Queue',
+      'ai': 'AI Service'
+    };
+    return names[category] || category;
+  }
+
   evaluatePhase2() {
     const result = {
       phase: 2,
@@ -814,6 +926,7 @@ class ArchitectureEvaluator {
 
     // Define all rules
     const rules = [
+      // Data Flow Direction removed - now a Phase 1 hard requirement
       { name: 'Database Exposure', fn: this.checkDatabaseExposure.bind(this) },
       { name: 'CDN Placement', fn: this.checkCDNPlacement.bind(this) },
       { name: 'Load Balancer Connections', fn: this.checkLoadBalancerConnections.bind(this) },

@@ -7,6 +7,24 @@ let cachedServices = null;
 let lastCacheTime = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Helper function to transform service data (map baseCost to cost)
+function transformServiceData(services) {
+  const transformed = {};
+
+  for (const [provider, categories] of Object.entries(services)) {
+    transformed[provider] = {};
+
+    for (const [category, serviceList] of Object.entries(categories)) {
+      transformed[provider][category] = serviceList.map(service => ({
+        ...service,
+        cost: service.cost !== undefined ? service.cost : service.baseCost // Map baseCost to cost
+      }));
+    }
+  }
+
+  return transformed;
+}
+
 // Helper function to get services from Firebase with caching
 async function getServicesFromFirebase() {
   const now = Date.now();
@@ -24,7 +42,10 @@ async function getServicesFromFirebase() {
     }
 
     const data = doc.data();
-    cachedServices = data.data; // The actual services structure
+    const rawServices = data.data; // The actual services structure
+
+    // Transform the data to map baseCost to cost
+    cachedServices = transformServiceData(rawServices);
     lastCacheTime = now;
 
     return cachedServices;

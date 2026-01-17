@@ -374,8 +374,136 @@ const sampleChallenges = [
       maxServices: 10
     },
     category: "Full-Stack",
-    editorial: "",
-    solutions: [],
+    editorial: `
+      <h2>High-Traffic Architecture Patterns</h2>
+      <p>Building for high traffic requires thinking about redundancy, caching, and horizontal scaling from day one.</p>
+
+      <h3>Core Components</h3>
+      <ul>
+        <li><strong>Load Balancer:</strong> Distributes traffic across multiple servers, provides health checks</li>
+        <li><strong>Auto-Scaling Compute:</strong> Multiple EC2 instances that scale based on CPU/memory usage</li>
+        <li><strong>Cache Layer:</strong> Redis/Memcached to cache database queries and session data</li>
+        <li><strong>Managed Database:</strong> RDS with Multi-AZ for high availability</li>
+      </ul>
+
+      <h3>Scaling Strategy</h3>
+      <p>The architecture should handle 10,000+ requests/minute through:</p>
+      <ul>
+        <li>Horizontal scaling: Add more EC2 instances as traffic increases</li>
+        <li>Caching: Reduce database load by 80%+ with ElastiCache</li>
+        <li>Read replicas: Offload read queries to database replicas</li>
+      </ul>
+    `,
+    solutions: [
+      {
+        id: 'sol-3-1',
+        author: 'WebScaleArchitect',
+        title: 'Classic 3-Tier Architecture with ELB',
+        architecture: {
+          nodes: [
+            {
+              id: 'sol4-elb',
+              type: 'serviceNode',
+              position: { x: 300, y: 50 },
+              data: {
+                serviceName: 'ELB',
+                customLabel: 'Application Load Balancer',
+                category: 'networking',
+                cost: 22.50,
+                specs: '10K req/min',
+                inputSpec: 'User traffic',
+                outputSpec: 'Balanced requests'
+              }
+            },
+            {
+              id: 'sol4-ec2-1',
+              type: 'serviceNode',
+              position: { x: 150, y: 200 },
+              data: {
+                serviceName: 'EC2 t3.medium',
+                customLabel: 'Web Server 1',
+                category: 'compute',
+                cost: 30.37,
+                specs: '2 vCPU, 4GB',
+                inputSpec: 'HTTP requests',
+                outputSpec: 'Responses'
+              }
+            },
+            {
+              id: 'sol4-ec2-2',
+              type: 'serviceNode',
+              position: { x: 450, y: 200 },
+              data: {
+                serviceName: 'EC2 t3.medium',
+                customLabel: 'Web Server 2',
+                category: 'compute',
+                cost: 30.37,
+                specs: '2 vCPU, 4GB',
+                inputSpec: 'HTTP requests',
+                outputSpec: 'Responses'
+              }
+            },
+            {
+              id: 'sol4-cache',
+              type: 'serviceNode',
+              position: { x: 300, y: 350 },
+              data: {
+                serviceName: 'ElastiCache Redis',
+                customLabel: 'Session & Query Cache',
+                category: 'cache',
+                cost: 24.48,
+                specs: 'cache.t3.micro',
+                inputSpec: 'Cache queries',
+                outputSpec: 'Cached data'
+              }
+            },
+            {
+              id: 'sol4-rds',
+              type: 'serviceNode',
+              position: { x: 300, y: 500 },
+              data: {
+                serviceName: 'RDS MySQL',
+                customLabel: 'Primary Database',
+                category: 'database',
+                cost: 29.93,
+                specs: 'db.t3.small',
+                inputSpec: 'SQL queries',
+                outputSpec: 'Data'
+              }
+            }
+          ],
+          edges: [
+            { id: 'sol4-e1', source: 'sol4-elb', target: 'sol4-ec2-1', animated: true },
+            { id: 'sol4-e2', source: 'sol4-elb', target: 'sol4-ec2-2', animated: true },
+            { id: 'sol4-e3', source: 'sol4-ec2-1', target: 'sol4-cache', animated: true },
+            { id: 'sol4-e4', source: 'sol4-ec2-2', target: 'sol4-cache', animated: true },
+            { id: 'sol4-e5', source: 'sol4-ec2-1', target: 'sol4-rds', animated: true },
+            { id: 'sol4-e6', source: 'sol4-ec2-2', target: 'sol4-rds', animated: true }
+          ]
+        },
+        explanation: `
+          <p>A robust 3-tier architecture that provides fault tolerance and caching for high-traffic applications.</p>
+          <h3>Architecture Breakdown</h3>
+          <ul>
+            <li><strong>Load Balancing:</strong> ELB distributes traffic across multiple EC2 instances with health checks</li>
+            <li><strong>Redundant Compute:</strong> 2x EC2 t3.medium instances handle requests - if one fails, traffic routes to the other</li>
+            <li><strong>ElastiCache Layer:</strong> Redis caches database queries and stores session data for fast access</li>
+            <li><strong>RDS Multi-AZ:</strong> Managed MySQL database with automatic backups and failover</li>
+          </ul>
+          <h3>Performance Characteristics</h3>
+          <ul>
+            <li>Handles 10,000+ requests/minute with room to scale</li>
+            <li>Cache hit rate of 80% reduces database load significantly</li>
+            <li>99.9%+ uptime with Multi-AZ and redundant servers</li>
+            <li>Average response time under 100ms for cached requests</li>
+          </ul>
+          <p><strong>Total Cost:</strong> $137.65/month - well under the $200 budget</p>
+        `,
+        totalCost: 137.65,
+        upvotes: 289,
+        provider: 'AWS'
+      }
+    ],
     testCases: [
       {
         input: "10,000 requests/minute, 50GB database",

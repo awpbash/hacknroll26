@@ -35,7 +35,7 @@ const NodeContainer = styled.div<NodeContainerProps>`
 
 const NodeHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin-bottom: 10px;
   padding-bottom: 10px;
@@ -61,13 +61,15 @@ const ServiceIcon = styled.div`
 const TitleSection = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 `;
 
 const ServiceName = styled.div`
   font-weight: 700;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.95);
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,30 +100,21 @@ const CustomLabel = styled.input`
   }
 `;
 
-const InfoSection = styled.div`
-  margin-bottom: 10px;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-`;
-
 const NodeCost = styled.div`
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 700;
   background: rgba(255, 255, 255, 0.15);
   padding: 3px 8px;
   border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const ServiceSpecs = styled.div`
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.75);
-  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.3;
 `;
 
 const IOSection = styled.div`
@@ -308,6 +301,9 @@ const CustomServiceNode: React.FC<CustomServiceNodeProps> = ({ data, selected })
           <ServiceName title={data.serviceName}>
             {data.serviceName}
           </ServiceName>
+          {data.specs && (
+            <ServiceSpecs title={data.specs}>{data.specs}</ServiceSpecs>
+          )}
           <CustomLabel
             value={customLabel}
             onChange={handleLabelChange}
@@ -317,14 +313,8 @@ const CustomServiceNode: React.FC<CustomServiceNodeProps> = ({ data, selected })
             style={{ opacity: data.isExisting ? 0.7 : 1 }}
           />
         </TitleSection>
+        <NodeCost>{formatPrice(data.cost ?? 0, '/mo')}</NodeCost>
       </NodeHeader>
-
-      <InfoSection>
-        <InfoRow>
-          <NodeCost>{formatPrice(data.cost ?? 0, '/mo')}</NodeCost>
-        </InfoRow>
-        <ServiceSpecs title={data.specs}>{data.specs}</ServiceSpecs>
-      </InfoSection>
 
       <IOSection>
         <IOLabel>Input</IOLabel>

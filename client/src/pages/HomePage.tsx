@@ -370,7 +370,7 @@ const HomePage: React.FC = () => {
 
               <ChallengeInfo>
                 <ChallengeTitle>
-                  {challenge.id}. {challenge.title}
+                  {index + 1}. {challenge.title}
                 </ChallengeTitle>
                 <ChallengeMeta>
                   <span>💼 {challenge.category}</span>
