@@ -17,7 +17,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 10,
       requiredServices: ["storage", "networking"],
-      optionalServices: []
+      optionalServices: [],
+      minServices: 2,
+      maxServices: 4
     },
     category: "Storage",
     acceptanceRate: 85.3,
@@ -38,7 +40,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 30,
       requiredServices: ["serverless", "database"],
-      optionalServices: ["networking", "cache"]
+      optionalServices: ["networking", "cache"],
+      minServices: 3,
+      maxServices: 6
     },
     category: "Serverless",
     acceptanceRate: 62.8,
@@ -59,7 +63,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 200,
       requiredServices: ["compute", "database", "networking"],
-      optionalServices: ["cache"]
+      optionalServices: ["cache"],
+      minServices: 4,
+      maxServices: 10
     },
     category: "Full-Stack",
     acceptanceRate: 71.5,
@@ -81,7 +87,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 500,
       requiredServices: ["messaging", "serverless", "database", "storage"],
-      optionalServices: []
+      optionalServices: [],
+      minServices: 4,
+      maxServices: 8
     },
     category: "Full-Stack",
     acceptanceRate: 45.2,
@@ -102,7 +110,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 1000,
       requiredServices: ["compute", "database", "networking", "storage"],
-      optionalServices: []
+      optionalServices: [],
+      minServices: 6,
+      maxServices: 15
     },
     category: "Full-Stack",
     acceptanceRate: 58.9,
@@ -124,7 +134,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 150,
       requiredServices: ["ai", "serverless", "database"],
-      optionalServices: ["compute", "storage", "networking"]
+      optionalServices: ["compute", "storage", "networking"],
+      minServices: 3,
+      maxServices: 6
     },
     category: "Serverless",
     acceptanceRate: 38.7,
@@ -146,7 +158,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 100,
       requiredServices: ["database"],
-      optionalServices: ["serverless", "compute", "cache"]
+      optionalServices: ["serverless", "compute", "cache"],
+      minServices: 1,
+      maxServices: 4
     },
     category: "Database",
     existingInfrastructure: {
@@ -208,7 +222,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 40,
       requiredServices: ["cache"],
-      optionalServices: ["serverless"]
+      optionalServices: ["serverless"],
+      minServices: 1,
+      maxServices: 3
     },
     category: "Serverless",
     existingInfrastructure: {
@@ -270,7 +286,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 250,
       requiredServices: ["messaging", "database", "serverless"],
-      optionalServices: ["storage", "compute"]
+      optionalServices: ["storage", "compute"],
+      minServices: 2,
+      maxServices: 6
     },
     category: "Full-Stack",
     existingInfrastructure: {
@@ -332,7 +350,9 @@ export const mockChallenges: Challenge[] = [
     constraints: {
       maxCost: 120,
       requiredServices: ["ai"],
-      optionalServices: ["serverless", "messaging", "compute"]
+      optionalServices: ["serverless", "messaging", "compute"],
+      minServices: 1,
+      maxServices: 4
     },
     category: "Compute",
     existingInfrastructure: {

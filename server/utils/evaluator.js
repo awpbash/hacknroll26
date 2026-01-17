@@ -10,79 +10,62 @@ class ArchitectureEvaluator {
   }
 
   async evaluate() {
-    const { architecture, provider } = this.submission;
+    // Phase 1: Basic Validation (REQUIRED)
+    const phase1 = await this.evaluatePhase1();
 
-    // Calculate total cost
-    const cost = this.calculateCost(architecture, provider);
-
-    // Calculate complexity score (number of components and connections)
-    const complexity = architecture.nodes.length + architecture.edges.length;
-
-    // Validate architecture meets requirements
-    const validationResult = this.validateArchitecture(architecture, provider);
-
-    // Check if cost is within budget
-    if (cost > this.challenge.constraints.maxCost) {
-      this.errors.push(`Cost ($${cost.toFixed(2)}) exceeds maximum budget ($${this.challenge.constraints.maxCost})`);
+    if (!phase1.passed) {
+      // Failed Phase 1 - return immediately
       return {
         passed: false,
-        cost,
-        complexity,
+        cost: phase1.cost,
+        complexity: phase1.complexity,
         score: 0,
-        feedback: this.feedback,
-        errors: this.errors,
-        status: 'Too Expensive'
+        feedback: [],
+        errors: phase1.errors,
+        status: phase1.status,
+        phases: {
+          phase1: phase1
+        }
       };
     }
 
-    // Check if all required services are present
-    if (!validationResult.valid) {
-      this.errors.push(...validationResult.errors);
-      return {
-        passed: false,
-        cost,
-        complexity,
-        score: 0,
-        feedback: this.feedback,
-        errors: this.errors,
-        status: 'Wrong Architecture'
-      };
+    // Phase 2: Rule-Based Validation (RECOMMENDED)
+    const phase2 = this.evaluatePhase2();
+
+    // Calculate score with Phase 2 penalties
+    const score = this.calculateScoreWithPhases(phase1, phase2);
+
+    // Build feedback array
+    const feedback = [];
+    feedback.push(`Total cost: $${phase1.cost.toFixed(2)}/month`);
+    feedback.push(`Architecture complexity: ${phase1.complexity} components`);
+
+    if (phase2.warnings.length > 0) {
+      feedback.push(`⚠️ ${phase2.warnings.length} architectural warning(s) found`);
+    } else {
+      feedback.push('✓ All architectural best practices followed');
     }
 
-    // Calculate score: lower cost and lower complexity = higher score
-    // Score = 1000 - (cost_ratio * 500) - (complexity_ratio * 300) + bonus
-    const costRatio = cost / this.challenge.constraints.maxCost;
-    const optimalComplexity = this.challenge.optimalSolution?.complexity || complexity;
-    const complexityRatio = complexity / (optimalComplexity * 2); // Allow up to 2x optimal complexity
+    feedback.push(`Efficiency score: ${score}/1000`);
 
-    let score = 1000 - (costRatio * 500) - (Math.min(complexityRatio, 1) * 300);
-
-    // Bonus points for efficiency
+    // Cost efficiency bonus feedback
+    const costRatio = phase1.cost / this.challenge.constraints.maxCost;
     if (costRatio < 0.5) {
-      score += 100;
-      this.feedback.push("Excellent cost optimization! 🎉");
+      feedback.push("Excellent cost optimization!");
     }
-
-    if (complexity <= optimalComplexity) {
-      score += 50;
-      this.feedback.push("Great architectural simplicity!");
-    }
-
-    // Ensure score is not negative
-    score = Math.max(0, Math.round(score));
-
-    this.feedback.push(`Total cost: $${cost.toFixed(2)}/month`);
-    this.feedback.push(`Architecture complexity: ${complexity} components`);
-    this.feedback.push(`Efficiency score: ${score}/1000`);
 
     return {
       passed: true,
-      cost,
-      complexity,
-      score,
-      feedback: this.feedback,
-      errors: this.errors,
-      status: 'Accepted'
+      cost: phase1.cost,
+      complexity: phase1.complexity,
+      score: score,
+      feedback: feedback,
+      errors: [],
+      status: 'Accepted',
+      phases: {
+        phase1: phase1,
+        phase2: phase2
+      }
     };
   }
 
@@ -131,6 +114,21 @@ class ArchitectureEvaluator {
           totalCost += service.cost * 1000000;
         } else if (service.category === 'cache') {
           totalCost += service.cost * hoursPerMonth;
+        } else if (service.category === 'ai') {
+          // AI cost calculation based on pricing model
+          if (service.specs.includes('Per request') || service.specs.includes('Per 1K')) {
+            // Request-based pricing (assume 1M requests/month)
+            totalCost += service.cost * 1000000;
+          } else if (service.specs.includes('Per image')) {
+            // Image processing (assume 10K images/month)
+            totalCost += service.cost * 10000;
+          } else if (service.specs.includes('Per hour') || service.specs.includes('VRAM')) {
+            // GPU/compute (hourly pricing)
+            totalCost += service.cost * hoursPerMonth;
+          } else {
+            // Default to hourly
+            totalCost += service.cost * hoursPerMonth;
+          }
         } else {
           totalCost += service.cost;
         }
@@ -183,6 +181,627 @@ class ArchitectureEvaluator {
       valid: errors.length === 0,
       errors
     };
+  }
+
+  // Phase 1: Basic Validation Methods
+  validateConnectivity() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    // Empty architecture
+    if (nodes.length === 0) {
+      return { passed: false, error: 'Architecture is empty' };
+    }
+
+    // Single node is valid
+    if (nodes.length === 1) {
+      return { passed: true };
+    }
+
+    // Multiple nodes must have edges
+    if (edges.length === 0) {
+      return {
+        passed: false,
+        error: 'Components must be connected'
+      };
+    }
+
+    // Check for orphaned nodes (no connections)
+    const connectedNodeIds = new Set();
+    edges.forEach(edge => {
+      connectedNodeIds.add(edge.source);
+      connectedNodeIds.add(edge.target);
+    });
+
+    const orphanedNodes = nodes.filter(node =>
+      !connectedNodeIds.has(node.id)
+    );
+
+    if (orphanedNodes.length > 0) {
+      const names = orphanedNodes
+        .map(n => n.data?.label || n.type)
+        .join(', ');
+      return {
+        passed: false,
+        error: `Disconnected components: ${names}`
+      };
+    }
+
+    // Check if fully connected (BFS)
+    if (!this.isFullyConnected()) {
+      return {
+        passed: false,
+        error: 'Architecture has multiple disconnected groups'
+      };
+    }
+
+    return { passed: true };
+  }
+
+  isFullyConnected() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    if (nodes.length <= 1) return true;
+
+    // Build adjacency list (treat as undirected)
+    const graph = {};
+    nodes.forEach(node => {
+      graph[node.id] = [];
+    });
+
+    edges.forEach(edge => {
+      graph[edge.source] = graph[edge.source] || [];
+      graph[edge.target] = graph[edge.target] || [];
+      graph[edge.source].push(edge.target);
+      graph[edge.target].push(edge.source);
+    });
+
+    // BFS from first node
+    const visited = new Set();
+    const queue = [nodes[0].id];
+    visited.add(nodes[0].id);
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      const neighbors = graph[current] || [];
+
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+
+    return visited.size === nodes.length;
+  }
+
+  validateComplexity() {
+    const nodes = this.submission.architecture.nodes;
+
+    // Only count NEW nodes (not existing infrastructure)
+    const newNodes = nodes.filter(n => !n.data?.isExisting);
+    const nodeCount = newNodes.length;
+
+    const { minServices, maxServices } = this.challenge.constraints;
+
+    // Use defaults if not specified
+    const min = minServices || 1;
+    const max = maxServices || 20;
+
+    if (nodeCount < min) {
+      return {
+        passed: false,
+        error: `Too few new services: ${nodeCount} (minimum: ${min})`
+      };
+    }
+
+    if (nodeCount > max) {
+      return {
+        passed: false,
+        error: `Too many new services: ${nodeCount} (maximum: ${max})`
+      };
+    }
+
+    return { passed: true };
+  }
+
+  validateCost(cost) {
+    if (cost > this.challenge.constraints.maxCost) {
+      return {
+        passed: false,
+        error: `Cost ($${cost.toFixed(2)}) exceeds maximum budget ($${this.challenge.constraints.maxCost})`
+      };
+    }
+    return { passed: true };
+  }
+
+  validateRequiredServices() {
+    const { requiredServices } = this.challenge.constraints;
+    const nodes = this.submission.architecture.nodes;
+    const provider = this.submission.provider;
+    const services = cloudServices[provider];
+
+    if (!services) {
+      return {
+        passed: false,
+        error: `Provider ${provider} not supported`
+      };
+    }
+
+    const usedCategories = new Set();
+    nodes.forEach(node => {
+      for (const category in services) {
+        const service = services[category].find(s => s.id === node.type);
+        if (service) {
+          usedCategories.add(service.category);
+        }
+      }
+    });
+
+    const missingServices = requiredServices.filter(required =>
+      !usedCategories.has(required)
+    );
+
+    if (missingServices.length > 0) {
+      return {
+        passed: false,
+        error: `Missing required service categories: ${missingServices.join(', ')}`
+      };
+    }
+
+    return { passed: true };
+  }
+
+  async evaluatePhase1() {
+    const result = {
+      phase: 1,
+      passed: false,
+      errors: [],
+      cost: 0,
+      complexity: 0,
+      timestamp: new Date()
+    };
+
+    // 1. Calculate cost (only for NEW nodes, not existing)
+    const nodes = this.submission.architecture.nodes;
+    const newNodes = nodes.filter(n => !n.data?.isExisting);
+
+    // Create temporary architecture with only new nodes for cost calculation
+    const newArchitecture = {
+      nodes: newNodes,
+      edges: this.submission.architecture.edges
+    };
+    result.cost = this.calculateCost(newArchitecture, this.submission.provider);
+
+    // 2. Validate cost (STOP on fail)
+    const costCheck = this.validateCost(result.cost);
+    if (!costCheck.passed) {
+      result.errors.push(costCheck.error);
+      result.status = 'Too Expensive';
+      return result;
+    }
+
+    // 3. Validate required services (STOP on fail)
+    const servicesCheck = this.validateRequiredServices();
+    if (!servicesCheck.passed) {
+      result.errors.push(servicesCheck.error);
+      result.status = 'Wrong Architecture';
+      return result;
+    }
+
+    // 4. Validate connectivity (STOP on fail)
+    const connectivityCheck = this.validateConnectivity();
+    if (!connectivityCheck.passed) {
+      result.errors.push(connectivityCheck.error);
+      result.status = 'Incomplete';
+      return result;
+    }
+
+    // 5. Validate complexity (STOP on fail)
+    result.complexity = newNodes.length;  // Only count new nodes
+    const complexityCheck = this.validateComplexity();
+    if (!complexityCheck.passed) {
+      result.errors.push(complexityCheck.error);
+      result.status = 'Wrong Architecture';
+      return result;
+    }
+
+    // Phase 1 PASSED
+    result.passed = true;
+    result.status = 'Accepted';
+    return result;
+  }
+
+  // Phase 2: Rule-Based Pattern Validation
+  checkDatabaseExposure() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    const databases = nodes.filter(n =>
+      this.getServiceCategory(n) === 'database'
+    );
+
+    for (const db of databases) {
+      const incomingEdges = edges.filter(e => e.target === db.id);
+
+      // No incoming = publicly exposed
+      if (incomingEdges.length === 0) {
+        return {
+          passed: false,
+          warning: `Database (${db.data?.label || db.type}) should not be publicly accessible`
+        };
+      }
+
+      // Check if connects directly to CDN/LB (bad)
+      for (const edge of incomingEdges) {
+        const source = nodes.find(n => n.id === edge.source);
+        const sourceService = this.getServiceDetails(source);
+
+        if (sourceService?.id?.includes('cdn') ||
+            sourceService?.id?.includes('cloudfront') ||
+            sourceService?.id?.includes('elb') ||
+            sourceService?.id?.includes('load-balancer')) {
+          return {
+            passed: false,
+            warning: 'Database should not connect directly to edge services - use compute layer'
+          };
+        }
+      }
+    }
+
+    return { passed: true };
+  }
+
+  checkCDNPlacement() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    const cdns = nodes.filter(n => {
+      const service = this.getServiceDetails(n);
+      return service?.id?.includes('cdn') ||
+             service?.id?.includes('cloudfront');
+    });
+
+    for (const cdn of cdns) {
+      const incomingEdges = edges.filter(e => e.target === cdn.id);
+
+      if (incomingEdges.length > 0) {
+        return {
+          passed: false,
+          warning: 'CDN should be at the edge, not behind other services'
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  checkLoadBalancerConnections() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    const loadBalancers = nodes.filter(n => {
+      const service = this.getServiceDetails(n);
+      return service?.id?.includes('elb') ||
+             service?.id?.includes('load-balancer') ||
+             service?.id?.includes('load-balancing');
+    });
+
+    for (const lb of loadBalancers) {
+      const outgoing = edges.filter(e => e.source === lb.id);
+
+      const connectsToCompute = outgoing.some(edge => {
+        const target = nodes.find(n => n.id === edge.target);
+        return this.getServiceCategory(target) === 'compute';
+      });
+
+      if (!connectsToCompute) {
+        return {
+          passed: false,
+          warning: 'Load balancer should connect to compute services'
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  checkAPIGatewayUsage() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    const apiGateways = nodes.filter(n => {
+      const service = this.getServiceDetails(n);
+      return service?.id?.includes('api-gateway');
+    });
+
+    for (const api of apiGateways) {
+      const outgoing = edges.filter(e => e.source === api.id);
+
+      const hasLambda = outgoing.some(edge => {
+        const target = nodes.find(n => n.id === edge.target);
+        const service = this.getServiceDetails(target);
+        return service?.id?.includes('lambda') ||
+               service?.id?.includes('functions');
+      });
+
+      const hasEC2 = outgoing.some(edge => {
+        const target = nodes.find(n => n.id === edge.target);
+        const service = this.getServiceDetails(target);
+        return service?.id?.includes('ec2') ||
+               service?.id?.includes('vm-');
+      });
+
+      if (hasEC2 && !hasLambda) {
+        return {
+          passed: false,
+          warning: 'API Gateway typically connects to Lambda. For EC2, use Application Load Balancer instead'
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  checkServerlessDatabaseChoice() {
+    const nodes = this.submission.architecture.nodes;
+
+    const hasLambda = nodes.some(n => {
+      const service = this.getServiceDetails(n);
+      return service?.category === 'serverless';
+    });
+
+    const hasRDS = nodes.some(n => {
+      const service = this.getServiceDetails(n);
+      return service?.id?.includes('rds') ||
+             service?.id?.includes('sql-');
+    });
+
+    const hasDynamoDB = nodes.some(n => {
+      const service = this.getServiceDetails(n);
+      return service?.id?.includes('dynamodb') ||
+             service?.id?.includes('cosmos') ||
+             service?.id?.includes('firestore');
+    });
+
+    if (hasLambda && hasRDS && !hasDynamoDB) {
+      return {
+        passed: false,
+        warning: 'Consider serverless database (DynamoDB/Firestore) for serverless architectures'
+      };
+    }
+
+    return { passed: true };
+  }
+
+  checkHighTrafficCaching() {
+    const nodes = this.submission.architecture.nodes;
+    const requiresCaching = this.challenge.requirements?.some(req =>
+      req.toLowerCase().includes('high-traffic') ||
+      req.toLowerCase().includes('10,000') ||
+      req.toLowerCase().includes('performance') ||
+      req.toLowerCase().includes('fast')
+    );
+
+    if (!requiresCaching) {
+      return { passed: true }; // Rule doesn't apply
+    }
+
+    const hasCache = nodes.some(n => {
+      const service = this.getServiceDetails(n);
+      return service?.category === 'cache' ||
+             service?.id?.includes('cache') ||
+             service?.id?.includes('cdn') ||
+             service?.id?.includes('cloudfront');
+    });
+
+    if (!hasCache) {
+      return {
+        passed: false,
+        warning: 'High-traffic applications should include caching for performance'
+      };
+    }
+
+    return { passed: true };
+  }
+
+  checkRedundancyForHA() {
+    const nodes = this.submission.architecture.nodes;
+    const requiresHA = this.challenge.requirements?.some(req =>
+      req.toLowerCase().includes('high availability') ||
+      req.toLowerCase().includes('99.9%') ||
+      req.toLowerCase().includes('fault-tolerant')
+    );
+
+    if (!requiresHA) {
+      return { passed: true };
+    }
+
+    const computeCount = nodes.filter(n => {
+      const service = this.getServiceDetails(n);
+      return service?.category === 'compute';
+    }).length;
+
+    if (computeCount === 1) {
+      return {
+        passed: false,
+        warning: 'High-availability requires multiple compute instances (redundancy)'
+      };
+    }
+
+    return { passed: true };
+  }
+
+  checkChallengeSpecificPatterns() {
+    const nodes = this.submission.architecture.nodes;
+    const title = this.challenge.title.toLowerCase();
+
+    // Static website shouldn't have compute/database
+    if (title.includes('static website')) {
+      const hasCompute = nodes.some(n =>
+        this.getServiceCategory(n) === 'compute'
+      );
+      const hasDB = nodes.some(n =>
+        this.getServiceCategory(n) === 'database'
+      );
+
+      if (hasCompute || hasDB) {
+        return {
+          passed: false,
+          warning: "Static websites don't need compute or databases - over-engineered"
+        };
+      }
+    }
+
+    // Serverless challenge should use serverless
+    if (title.includes('serverless')) {
+      const hasServerless = nodes.some(n =>
+        this.getServiceCategory(n) === 'serverless'
+      );
+      const hasEC2 = nodes.some(n => {
+        const service = this.getServiceDetails(n);
+        return service?.id?.includes('ec2');
+      });
+
+      if (!hasServerless && hasEC2) {
+        return {
+          passed: false,
+          warning: 'Serverless challenge - consider Lambda/Functions instead of EC2/VMs'
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  checkExistingInfrastructureIntegration() {
+    const nodes = this.submission.architecture.nodes;
+    const edges = this.submission.architecture.edges;
+
+    const existingNodes = nodes.filter(n => n.data?.isExisting);
+    const newNodes = nodes.filter(n => !n.data?.isExisting);
+
+    // No existing infrastructure = rule doesn't apply
+    if (existingNodes.length === 0) {
+      return { passed: true };
+    }
+
+    // Check if new nodes connect to existing infrastructure
+    const hasIntegration = newNodes.some(newNode => {
+      return edges.some(edge => {
+        const connectsToExisting =
+          (edge.source === newNode.id && existingNodes.some(e => e.id === edge.target)) ||
+          (edge.target === newNode.id && existingNodes.some(e => e.id === edge.source));
+        return connectsToExisting;
+      });
+    });
+
+    if (!hasIntegration && newNodes.length > 0) {
+      return {
+        passed: false,
+        warning: 'New services should integrate with existing infrastructure'
+      };
+    }
+
+    return { passed: true };
+  }
+
+  evaluatePhase2() {
+    const result = {
+      phase: 2,
+      warnings: [],
+      rulesChecked: 0,
+      rulesPassed: 0,
+      timestamp: new Date()
+    };
+
+    // Define all rules
+    const rules = [
+      { name: 'Database Exposure', fn: this.checkDatabaseExposure.bind(this) },
+      { name: 'CDN Placement', fn: this.checkCDNPlacement.bind(this) },
+      { name: 'Load Balancer Connections', fn: this.checkLoadBalancerConnections.bind(this) },
+      { name: 'API Gateway Usage', fn: this.checkAPIGatewayUsage.bind(this) },
+      { name: 'Serverless Database Choice', fn: this.checkServerlessDatabaseChoice.bind(this) },
+      { name: 'High Traffic Caching', fn: this.checkHighTrafficCaching.bind(this) },
+      { name: 'Redundancy for HA', fn: this.checkRedundancyForHA.bind(this) },
+      { name: 'Challenge-Specific Patterns', fn: this.checkChallengeSpecificPatterns.bind(this) },
+      { name: 'Existing Infrastructure Integration', fn: this.checkExistingInfrastructureIntegration.bind(this) }
+    ];
+
+    // Run all rules (non-blocking)
+    for (const rule of rules) {
+      result.rulesChecked++;
+      try {
+        const ruleResult = rule.fn();
+
+        if (ruleResult.passed) {
+          result.rulesPassed++;
+        } else if (ruleResult.warning) {
+          result.warnings.push({
+            rule: rule.name,
+            message: ruleResult.warning
+          });
+        }
+      } catch (error) {
+        console.error(`Rule ${rule.name} failed:`, error);
+      }
+    }
+
+    return result;
+  }
+
+  calculateScoreWithPhases(phase1Result, phase2Result) {
+    const { cost } = phase1Result;
+    const { warnings } = phase2Result;
+    const nodes = this.submission.architecture.nodes;
+
+    // Base score calculation (existing)
+    const costRatio = cost / this.challenge.constraints.maxCost;
+    const optimalComplexity = this.challenge.optimalSolution?.complexity || nodes.length;
+    const complexityRatio = nodes.length / (optimalComplexity * 2);
+
+    let score = 1000 - (costRatio * 500) - (Math.min(complexityRatio, 1) * 300);
+
+    // Bonuses (existing)
+    if (costRatio < 0.5) {
+      score += 100;
+    }
+
+    if (nodes.length <= optimalComplexity) {
+      score += 50;
+    }
+
+    // NEW: Phase 2 penalties
+    const warningPenalty = warnings.length * 25; // -25 points per warning
+    score -= warningPenalty;
+
+    // Ensure score is not negative
+    score = Math.max(0, Math.round(score));
+
+    return score;
+  }
+
+  // Helper methods
+  getServiceDetails(node) {
+    if (!node) return null;
+
+    const services = cloudServices[this.submission.provider];
+    if (!services) return null;
+
+    // Search all categories
+    for (const category in services) {
+      const service = services[category].find(s => s.id === node.type);
+      if (service) return service;
+    }
+
+    return null;
+  }
+
+  getServiceCategory(node) {
+    const service = this.getServiceDetails(node);
+    return service?.category || null;
   }
 }
 

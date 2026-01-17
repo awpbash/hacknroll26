@@ -8,17 +8,14 @@ router.get('/', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 100;
 
-    const leaderboard = await User.find()
-      .select('username totalScore solvedChallenges')
-      .sort({ totalScore: -1 })
-      .limit(limit);
+    const leaderboard = await User.getLeaderboard(limit);
 
-    // Add rank
+    // Format response
     const rankedLeaderboard = leaderboard.map((user, index) => ({
       rank: index + 1,
       username: user.username,
-      totalScore: user.totalScore,
-      solvedCount: user.solvedChallenges.length
+      totalScore: user.totalScore || 0,
+      solvedCount: user.solvedChallenges?.length || 0
     }));
 
     res.json(rankedLeaderboard);
@@ -37,14 +34,25 @@ router.get('/challenge/:challengeId', async (req, res) => {
     const submissions = await Submission.find({
       challengeId,
       status: 'Accepted'
-    })
-      .populate('userId', 'username')
-      .sort({ 'evaluation.score': -1, 'evaluation.cost': 1 });
+    });
+
+    // Manually populate user data
+    const populatedSubmissions = await Promise.all(
+      submissions.map(async (sub) => {
+        const user = await User.findById(sub.userId);
+        return {
+          ...sub,
+          user: user ? { id: user.id, username: user.username } : null
+        };
+      })
+    );
 
     // Group by user and keep best submission
     const userBestSubmissions = {};
-    submissions.forEach(sub => {
-      const userId = sub.userId._id.toString();
+    populatedSubmissions.forEach(sub => {
+      if (!sub.user) return;
+
+      const userId = sub.userId;
       if (!userBestSubmissions[userId] ||
           sub.evaluation.score > userBestSubmissions[userId].evaluation.score ||
           (sub.evaluation.score === userBestSubmissions[userId].evaluation.score &&
@@ -63,7 +71,7 @@ router.get('/challenge/:challengeId', async (req, res) => {
       })
       .map((sub, index) => ({
         rank: index + 1,
-        username: sub.userId.username,
+        username: sub.user.username,
         score: sub.evaluation.score,
         cost: sub.evaluation.cost,
         complexity: sub.evaluation.complexity,
@@ -81,21 +89,31 @@ router.get('/challenge/:challengeId', async (req, res) => {
 router.get('/cost-efficient', async (req, res) => {
   try {
     const submissions = await Submission.find({
-      status: 'Accepted'
-    })
-      .populate('userId', 'username')
-      .populate('challengeId', 'title')
-      .sort({ 'evaluation.cost': 1 })
-      .limit(50);
+      status: 'Accepted',
+      limit: 50
+    });
 
-    const leaderboard = submissions.map((sub, index) => ({
-      rank: index + 1,
-      username: sub.userId.username,
-      challenge: sub.challengeId.title,
-      cost: sub.evaluation.cost,
-      score: sub.evaluation.score,
-      timestamp: sub.createdAt
-    }));
+    // Sort by cost (ascending)
+    const sortedSubmissions = submissions.sort((a, b) =>
+      a.evaluation.cost - b.evaluation.cost
+    );
+
+    // Manually populate user and challenge data
+    const leaderboard = await Promise.all(
+      sortedSubmissions.map(async (sub, index) => {
+        const user = await User.findById(sub.userId);
+        const challenge = await Challenge.findById(sub.challengeId);
+
+        return {
+          rank: index + 1,
+          username: user?.username || 'Unknown',
+          challenge: challenge?.title || 'Unknown',
+          cost: sub.evaluation.cost,
+          score: sub.evaluation.score,
+          timestamp: sub.createdAt
+        };
+      })
+    );
 
     res.json(leaderboard);
   } catch (error) {

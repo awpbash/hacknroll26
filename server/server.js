@@ -1,7 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+
+// Initialize Firebase
+require('./config/firebase');
 
 const app = express();
 
@@ -9,13 +11,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cloudarch-leetcode', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Optional: Apply general API rate limiting
+if (process.env.ENABLE_RATE_LIMIT !== 'false') {
+  const { apiLimiter } = require('./middleware/rateLimiter');
+  app.use('/api/', apiLimiter);
+}
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
