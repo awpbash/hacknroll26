@@ -529,7 +529,7 @@ const sampleChallenges = [
           { source: 'ec2-2', target: 'rds' }
         ]
       },
-      cost: 65.2,
+      cost: 134,
       complexity: 5,
       explanation: "ELB + 2x EC2 + ElastiCache + RDS provides fault-tolerance and caching"
     }
@@ -648,7 +648,7 @@ const sampleChallenges = [
       "Deploy an LLM for chatbot functionality",
       "Use serverless architecture for auto-scaling",
       "Store conversation history in a database",
-      "Support at least 100 concurrent users",
+      "Support 40-50 concurrent users",
       "Response time under 3 seconds",
       "Balance cost and model performance"
     ],
@@ -699,7 +699,7 @@ const sampleChallenges = [
       "Search response time under 200ms"
     ],
     constraints: {
-      maxCost: 100,
+      maxCost: 120,
       requiredServices: ["database"],
       optionalServices: ["serverless", "compute", "cache"],
       minServices: 1,
@@ -780,7 +780,7 @@ const sampleChallenges = [
       "Track video views, watch time, and user engagement in real-time",
       "Store analytics data for reporting and dashboards",
       "Process 10,000+ events per minute",
-      "Enable SQL queries on analytics data",
+      "Store analytics data with query capabilities",
       "Provide near real-time insights (< 5 minute delay)"
     ],
     constraints: {
@@ -829,7 +829,7 @@ const sampleChallenges = [
       "Tag photos with detected labels",
       "Update DynamoDB with tags without manual intervention",
       "Process images within 10 seconds of upload",
-      "Handle 100+ photo uploads per minute"
+      "Handle 100+ photo uploads per hour"
     ],
     constraints: {
       maxCost: 120,

@@ -579,6 +579,25 @@ interface EvaluationResult {
   warnings: string[];
   llmFeedback: {
     summary: string;
+    functionalityScore?: number;
+    scalabilityScore?: number;
+    costEfficiencyScore?: number;
+    bestPracticesScore?: number;
+    strengths?: string[];
+    issues?: string[];
+    suggestions?: string[];
+    meetsRequirements?: boolean;
+    requirementAnalysis?: Array<{
+      requirement: string;
+      satisfied: boolean;
+      explanation: string;
+    }>;
+    costAnalysis?: {
+      total: number;
+      percentageOfBudget: number;
+      wastefulness: string;
+      optimizationOpportunities: string[];
+    };
   } | null;
   phase3Status?: 'pending' | 'completed' | 'failed' | 'disabled' | 'timeout';
 }
@@ -930,7 +949,7 @@ const ChallengePage: React.FC = () => {
                     </ConstraintItem>
                     {challenge.constraints.requiredServices && (
                       <ConstraintItem>
-                        Required: <span>{challenge.constraints.requiredServices.join(', ')}</span>
+                        Required: <span>{challenge.constraints.requiredServices.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}</span>
                       </ConstraintItem>
                     )}
                   </ConstraintBox>
@@ -1107,10 +1126,81 @@ const ChallengePage: React.FC = () => {
 
           {result.evaluation.llmFeedback && result.evaluation.phase3Status === 'completed' && (
             <FeedbackSection>
-              <ResultSectionTitle>🤖 AI Analysis (Phase 3)</ResultSectionTitle>
-              <Description style={{ marginTop: '12px', color: 'rgba(255, 255, 255, 0.95)' }}>
+              <ResultSectionTitle>🤖 AI Analysis</ResultSectionTitle>
+
+              {/* Summary */}
+              <Description style={{ marginTop: '12px', marginBottom: '16px', color: 'rgba(255, 255, 255, 0.95)', fontSize: '15px', fontWeight: '500' }}>
                 {result.evaluation.llmFeedback.summary}
               </Description>
+
+              {/* Detailed Scores */}
+              {(result.evaluation.llmFeedback.functionalityScore || result.evaluation.llmFeedback.scalabilityScore) && (
+                <>
+                  <ResultSectionTitle style={{ marginTop: '16px', fontSize: '11px' }}>Detailed Scores</ResultSectionTitle>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '8px' }}>
+                    {result.evaluation.llmFeedback.functionalityScore && (
+                      <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Functionality</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{result.evaluation.llmFeedback.functionalityScore}/10</div>
+                      </div>
+                    )}
+                    {result.evaluation.llmFeedback.scalabilityScore && (
+                      <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Scalability</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{result.evaluation.llmFeedback.scalabilityScore}/10</div>
+                      </div>
+                    )}
+                    {result.evaluation.llmFeedback.costEfficiencyScore && (
+                      <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Cost Efficiency</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{result.evaluation.llmFeedback.costEfficiencyScore}/10</div>
+                      </div>
+                    )}
+                    {result.evaluation.llmFeedback.bestPracticesScore && (
+                      <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Best Practices</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{result.evaluation.llmFeedback.bestPracticesScore}/10</div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Strengths */}
+              {result.evaluation.llmFeedback.strengths && result.evaluation.llmFeedback.strengths.length > 0 && (
+                <>
+                  <ResultSectionTitle style={{ marginTop: '16px', fontSize: '11px' }}>✅ Strengths</ResultSectionTitle>
+                  {result.evaluation.llmFeedback.strengths.map((strength: string, index: number) => (
+                    <FeedbackItem key={index} passed={true} style={{ padding: '6px 0', fontSize: '13px' }}>
+                      {strength}
+                    </FeedbackItem>
+                  ))}
+                </>
+              )}
+
+              {/* Issues */}
+              {result.evaluation.llmFeedback.issues && result.evaluation.llmFeedback.issues.length > 0 && (
+                <>
+                  <ResultSectionTitle style={{ marginTop: '16px', fontSize: '11px' }}>⚠️ Issues</ResultSectionTitle>
+                  {result.evaluation.llmFeedback.issues.map((issue: string, index: number) => (
+                    <FeedbackItem key={index} passed={false} style={{ padding: '6px 0', fontSize: '13px' }}>
+                      {issue}
+                    </FeedbackItem>
+                  ))}
+                </>
+              )}
+
+              {/* Suggestions */}
+              {result.evaluation.llmFeedback.suggestions && result.evaluation.llmFeedback.suggestions.length > 0 && (
+                <>
+                  <ResultSectionTitle style={{ marginTop: '16px', fontSize: '11px' }}>💡 Suggestions</ResultSectionTitle>
+                  {result.evaluation.llmFeedback.suggestions.map((suggestion: string, index: number) => (
+                    <FeedbackItem key={index} passed={true} style={{ padding: '6px 0', fontSize: '13px', color: 'rgba(255, 255, 255, 0.85)' }}>
+                      {suggestion}
+                    </FeedbackItem>
+                  ))}
+                </>
+              )}
             </FeedbackSection>
           )}
         </ResultPanel>

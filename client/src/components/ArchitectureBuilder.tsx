@@ -27,7 +27,7 @@ interface CategoryTitleProps {
 
 const BuilderContainer = styled.div`
   display: flex;
-  height: 700px;
+  height: 500px;
   border: 2px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
