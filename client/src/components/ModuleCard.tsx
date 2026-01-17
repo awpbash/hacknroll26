@@ -71,7 +71,7 @@ const Section = styled.div`
 const Heading = styled.h3`
   font-size: 1.3rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
@@ -85,18 +85,18 @@ const Icon = styled.span`
 const Text = styled.p`
   font-size: 1rem;
   line-height: 1.7;
-  color: #444;
+  color: var(--text-secondary);
   margin: 0;
 `;
 
 const AnalogyBox = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-cyber);
   border-radius: 12px;
   padding: 1.5rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.1);
+  box-shadow: var(--shadow-md);
 `;
 
 const AnalogyIcon = styled.div`
@@ -121,17 +121,17 @@ const List = styled.ul`
 const ListItem = styled.li`
   font-size: 1rem;
   line-height: 1.7;
-  color: #444;
+  color: var(--text-secondary);
   padding: 0.5rem 0 0.5rem 2rem;
   position: relative;
 
   &:before {
-    content: '✓';
+    content: '•';
     position: absolute;
     left: 0.5rem;
-    color: #10b981;
-    font-weight: bold;
-    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: normal;
+    font-size: 1.2rem;
   }
 `;
 
@@ -143,15 +143,15 @@ const ComparisonGrid = styled.div`
 `;
 
 const ComparisonCard = styled.div`
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   padding: 1.25rem;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
 `;
@@ -159,27 +159,27 @@ const ComparisonCard = styled.div`
 const ComparisonTerm = styled.h4`
   font-size: 1.1rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   margin: 0 0 0.75rem 0;
 `;
 
 const ComparisonDef = styled.p`
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #444;
+  color: var(--text-secondary);
   margin: 0 0 0.75rem 0;
 `;
 
 const ComparisonExample = styled.p`
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--text-muted);
   margin: 0;
   padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 
   strong {
-    color: #667eea;
+    color: var(--accent-primary);
     font-weight: 600;
   }
 `;

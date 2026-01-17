@@ -199,10 +199,11 @@ const ExistingBadge = styled.div`
 
 const HandleStyle: CSSProperties = {
   background: 'white',
-  width: 12,
-  height: 12,
-  border: '2px solid rgba(0, 0, 0, 0.3)',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+  width: 16,
+  height: 16,
+  border: '3px solid rgba(0, 0, 0, 0.3)',
+  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
+  cursor: 'crosshair'
 };
 
 // Service category colors

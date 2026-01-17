@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { FaCloud, FaTrophy, FaBook, FaCode, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaMoon, FaSun } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface ButtonProps {
   primary?: boolean;
@@ -59,6 +61,9 @@ const NavLink = styled(Link)`
   font-size: 15px;
   transition: all 0.2s;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:after {
     content: '';
@@ -81,6 +86,28 @@ const NavLink = styled(Link)`
   }
 `;
 
+const ThemeToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+`;
+
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
@@ -99,7 +126,7 @@ const Username = styled.span`
 const Button = styled.button<ButtonProps>`
   padding: 10px 20px;
   background: ${props => props.primary ?
-    'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' :
+    'var(--gradient-cyber)' :
     'var(--bg-tertiary)'};
   color: var(--text-primary);
   border: ${props => props.primary ? 'none' : '1px solid var(--border-color)'};
@@ -109,6 +136,9 @@ const Button = styled.button<ButtonProps>`
   box-shadow: ${props => props.primary ? 'var(--glow-primary)' : 'var(--shadow-sm)'};
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
     transform: translateY(-2px);
@@ -134,6 +164,7 @@ interface AuthContextType {
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth() as AuthContextType;
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = (): void => {
@@ -145,23 +176,39 @@ const Navbar: React.FC = () => {
     <Nav>
       <NavContainer>
         <Logo to="/">
-          ☁️ CloudArch
+          <FaCloud /> CloudCode
         </Logo>
 
         <NavLinks>
-          <NavLink to="/challenges">Challenges</NavLink>
-          <NavLink to="/learn">Learn</NavLink>
-          <NavLink to="/leaderboard">Leaderboard</NavLink>
+          <NavLink to="/challenges">
+            <FaCode /> Challenges
+          </NavLink>
+          <NavLink to="/learn">
+            <FaBook /> Learn
+          </NavLink>
+          <NavLink to="/leaderboard">
+            <FaTrophy /> Leaderboard
+          </NavLink>
+
+          <ThemeToggle onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+            {theme === 'dark' ? <FaSun /> : <FaMoon />}
+          </ThemeToggle>
 
           {isAuthenticated ? (
             <UserInfo>
               <Username>{user?.username}</Username>
-              <Button onClick={handleLogout}>Logout</Button>
+              <Button onClick={handleLogout}>
+                <FaSignOutAlt /> Logout
+              </Button>
             </UserInfo>
           ) : (
             <UserInfo>
-              <Button onClick={() => navigate('/login')}>Login</Button>
-              <Button primary onClick={() => navigate('/register')}>Sign Up</Button>
+              <Button onClick={() => navigate('/login')}>
+                <FaSignInAlt /> Login
+              </Button>
+              <Button primary onClick={() => navigate('/register')}>
+                <FaUserPlus /> Sign Up
+              </Button>
             </UserInfo>
           )}
         </NavLinks>

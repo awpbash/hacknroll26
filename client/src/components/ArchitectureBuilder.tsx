@@ -520,6 +520,13 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
           onDragOver={onDragOver}
           fitView
           attributionPosition="bottom-left"
+          connectionRadius={30}
+          connectionLineStyle={{ stroke: 'var(--accent-primary)', strokeWidth: 3 }}
+          defaultEdgeOptions={{
+            animated: true,
+            style: { stroke: 'var(--accent-primary)', strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--accent-primary)' }
+          }}
         >
           <Controls />
           <MiniMap

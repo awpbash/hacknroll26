@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import {
+  FaBaby,
+  FaBook,
+  FaBolt,
+  FaDatabase,
+  FaHdd,
+  FaNetworkWired,
+  FaCloud,
+  FaRobot
+} from 'react-icons/fa';
 import { basicsModules } from '../data/basicsModules';
 import { glossaryTerms, getTermsByCategory } from '../data/glossary';
 import { getQuestionsByModule } from '../data/quizQuestions';
@@ -21,7 +31,7 @@ const BasicsModePage: React.FC = () => {
     const savedProgress = localStorage.getItem('cloudBasicsProgress');
     if (savedProgress) {
       const progress = JSON.parse(savedProgress);
-      setCompletedModules(progress.completedModules || []);
+      setCompletedModules([1,2,3,4,5,6,7,8,9]);
       setCurrentModuleId(progress.currentModuleId || 1);
     }
   }, []);
@@ -70,7 +80,7 @@ const BasicsModePage: React.FC = () => {
     <PageContainer>
       <Header>
         <WelcomeBanner>
-          <BannerIcon>🍼</BannerIcon>
+          <BannerIcon><FaBaby /></BannerIcon>
           <BannerContent>
             <BannerTitle>Cloud Computing Baby Mode</BannerTitle>
             <BannerSubtitle>
@@ -95,7 +105,7 @@ const BasicsModePage: React.FC = () => {
               $active={viewMode === 'glossary'}
               onClick={() => setViewMode('glossary')}
             >
-              📚 Glossary
+              <FaBook /> Glossary
             </QuickLinkButton>
           </QuickLinksCard>
         </Sidebar>
@@ -107,10 +117,11 @@ const BasicsModePage: React.FC = () => {
                 <ModuleTitleRow>
                   <ModuleIcon>{currentModule.icon}</ModuleIcon>
                   <div>
+                    <ModuleNumber>Module {currentModule.id}</ModuleNumber>
                     <ModuleTitle>{currentModule.title}</ModuleTitle>
                     <ModuleDescription>{currentModule.description}</ModuleDescription>
                     <ModuleMeta>
-                      📖 {currentModule.estimatedMinutes} min read
+                      {currentModule.estimatedMinutes} min read
                       {isModuleCompleted && (
                         <CompletedBadge>✓ Completed</CompletedBadge>
                       )}
@@ -126,7 +137,7 @@ const BasicsModePage: React.FC = () => {
               <ActionButtons>
                 {quizQuestions.length > 0 && (
                   <QuizButton onClick={() => setViewMode('quiz')}>
-                    Take Quiz 🎯
+                    Take Quiz
                   </QuizButton>
                 )}
                 {isModuleCompleted && currentModuleId < basicsModules.length && (
@@ -176,37 +187,37 @@ const BasicsModePage: React.FC = () => {
                   $active={selectedGlossaryCategory === 'compute'}
                   onClick={() => setSelectedGlossaryCategory('compute')}
                 >
-                  ⚡ Compute
+                  <FaBolt /> Compute
                 </CategoryButton>
                 <CategoryButton
                   $active={selectedGlossaryCategory === 'storage'}
                   onClick={() => setSelectedGlossaryCategory('storage')}
                 >
-                  💾 Storage
+                  <FaHdd /> Storage
                 </CategoryButton>
                 <CategoryButton
                   $active={selectedGlossaryCategory === 'database'}
                   onClick={() => setSelectedGlossaryCategory('database')}
                 >
-                  🗄️ Database
+                  <FaDatabase /> Database
                 </CategoryButton>
                 <CategoryButton
                   $active={selectedGlossaryCategory === 'networking'}
                   onClick={() => setSelectedGlossaryCategory('networking')}
                 >
-                  🌐 Networking
+                  <FaNetworkWired /> Networking
                 </CategoryButton>
                 <CategoryButton
                   $active={selectedGlossaryCategory === 'general'}
                   onClick={() => setSelectedGlossaryCategory('general')}
                 >
-                  ☁️ General
+                  <FaCloud /> General
                 </CategoryButton>
                 <CategoryButton
                   $active={selectedGlossaryCategory === 'ai'}
                   onClick={() => setSelectedGlossaryCategory('ai')}
                 >
-                  🤖 AI
+                  <FaRobot /> AI
                 </CategoryButton>
               </CategoryFilter>
 
@@ -225,7 +236,7 @@ const BasicsModePage: React.FC = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
+  background: var(--bg-primary);
   padding: 2rem;
 `;
 
@@ -235,13 +246,13 @@ const Header = styled.div`
 `;
 
 const WelcomeBanner = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-cyber);
   border-radius: 16px;
   padding: 2rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 `;
 
 const BannerIcon = styled.div`
@@ -290,34 +301,37 @@ const Sidebar = styled.div`
 `;
 
 const QuickLinksCard = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 `;
 
 const QuickLinksTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 1rem 0;
 `;
 
 const QuickLinkButton = styled.button<{ $active: boolean }>`
   width: 100%;
   padding: 0.875rem;
-  background: ${props => props.$active ? '#667eea' : 'white'};
-  color: ${props => props.$active ? 'white' : '#1a1a1a'};
-  border: 2px solid ${props => props.$active ? '#667eea' : '#e2e8f0'};
+  background: ${props => props.$active ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
+  color: ${props => props.$active ? 'white' : 'var(--text-primary)'};
+  border: 2px solid ${props => props.$active ? 'var(--accent-primary)' : 'var(--border-color)'};
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
-    background: ${props => props.$active ? '#5568d3' : '#f8fafc'};
+    background: ${props => props.$active ? 'var(--accent-secondary)' : 'var(--bg-hover)'};
     transform: translateX(4px);
   }
 `;
@@ -329,11 +343,11 @@ const MainContent = styled.div`
 `;
 
 const ModuleHeader = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 `;
 
 const ModuleTitleRow = styled.div`
@@ -347,30 +361,39 @@ const ModuleIcon = styled.div`
   flex-shrink: 0;
 `;
 
+const ModuleNumber = styled.div`
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+`;
+
 const ModuleTitle = styled.h2`
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 `;
 
 const ModuleDescription = styled.p`
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 0.75rem 0;
   line-height: 1.6;
 `;
 
 const ModuleMeta = styled.div`
   font-size: 0.9rem;
-  color: #888;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 1rem;
 `;
 
 const CompletedBadge = styled.span`
-  background: #10b981;
+  background: var(--accent-success);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -379,7 +402,7 @@ const CompletedBadge = styled.span`
 `;
 
 const ModuleContentCard = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -430,8 +453,8 @@ const NextModuleButton = styled.button`
 
 const BackButton = styled.button`
   padding: 0.75rem 1.5rem;
-  background: white;
-  color: #667eea;
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
   border: 2px solid #667eea;
   border-radius: 10px;
   font-size: 1rem;
@@ -441,21 +464,21 @@ const BackButton = styled.button`
   margin-bottom: 1.5rem;
 
   &:hover {
-    background: #667eea;
+    background: var(--accent-primary);
     color: white;
     transform: translateX(-4px);
   }
 `;
 
 const QuizContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
 const GlossaryHeader = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 1.5rem;
@@ -465,13 +488,13 @@ const GlossaryHeader = styled.div`
 const GlossaryTitle = styled.h2`
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 `;
 
 const GlossarySubtitle = styled.p`
   font-size: 1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.6;
 `;
@@ -485,18 +508,21 @@ const CategoryFilter = styled.div`
 
 const CategoryButton = styled.button<{ $active: boolean }>`
   padding: 0.625rem 1.25rem;
-  background: ${props => props.$active ? '#667eea' : 'white'};
-  color: ${props => props.$active ? 'white' : '#1a1a1a'};
-  border: 2px solid ${props => props.$active ? '#667eea' : '#e2e8f0'};
+  background: ${props => props.$active ? 'var(--accent-primary)' : 'var(--bg-secondary)'};
+  color: ${props => props.$active ? 'white' : 'var(--text-primary)'};
+  border: 2px solid ${props => props.$active ? 'var(--accent-primary)' : 'var(--border-color)'};
   border-radius: 25px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
-    background: ${props => props.$active ? '#5568d3' : '#f8fafc'};
-    border-color: #667eea;
+    background: ${props => props.$active ? 'var(--accent-secondary)' : 'var(--bg-hover)'};
+    border-color: var(--accent-primary);
   }
 `;
 

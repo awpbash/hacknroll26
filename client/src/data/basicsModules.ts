@@ -88,17 +88,17 @@ export const basicsModules: BasicModule[] = [
         type: 'comparison',
         content: [
           {
-            term: "💻 Compute (The Brain)",
+            term: "Compute (The Brain)",
             definition: "Processing power to run your code and applications",
             example: "Running a website, processing videos, analyzing data"
           },
           {
-            term: "💾 Storage (The Filing Cabinet)",
+            term: "Storage (The Filing Cabinet)",
             definition: "Space to save files, photos, videos, and documents",
             example: "Storing user photos, backing up files, hosting videos"
           },
           {
-            term: "🗄️ Database (The Organized Library)",
+            term: "Database (The Organized Library)",
             definition: "Structured way to store and find specific information quickly",
             example: "User accounts, product catalogs, order history"
           }
@@ -292,17 +292,17 @@ export const basicsModules: BasicModule[] = [
         type: 'comparison',
         content: [
           {
-            term: "☁️ AWS (Amazon Web Services)",
+            term: "AWS (Amazon Web Services)",
             definition: "The largest and most mature cloud provider",
             example: "Most services, biggest ecosystem, but can be overwhelming for beginners"
           },
           {
-            term: "🔷 Microsoft Azure",
+            term: "Microsoft Azure",
             definition: "Best for companies using Microsoft products",
             example: "Great for Windows apps, Office 365 integration, enterprise features"
           },
           {
-            term: "🔶 Google Cloud (GCP)",
+            term: "Google Cloud (GCP)",
             definition: "Strong in data analytics and AI/ML",
             example: "Simpler than AWS, excellent for machine learning projects"
           }
@@ -348,87 +348,6 @@ export const basicsModules: BasicModule[] = [
   },
   {
     id: 6,
-    title: "Your First Cloud Projects",
-    icon: "🚀",
-    description: "Simple project ideas to apply what you've learned",
-    estimatedMinutes: 7,
-    content: [
-      {
-        type: 'text',
-        heading: "Ready to Build Something?",
-        content: "Here are beginner-friendly projects that use cloud services. Start simple and gradually increase complexity!"
-      },
-      {
-        type: 'comparison',
-        heading: "Project Ideas by Difficulty",
-        content: [
-          {
-            term: "🌟 Beginner: Static Website",
-            definition: "Host a personal portfolio or blog",
-            example: "Services needed: Object Storage (S3/Azure Blob) + CDN = ~$1-5/month"
-          },
-          {
-            term: "⭐⭐ Intermediate: Photo Gallery",
-            definition: "Upload and display photos with captions",
-            example: "Services: Storage + Database + Compute Instance = ~$20-40/month"
-          },
-          {
-            term: "⭐⭐ Intermediate: Serverless API",
-            definition: "Build a REST API without managing servers",
-            example: "Services: Serverless Functions + Database = ~$0-10/month (mostly free tier)"
-          },
-          {
-            term: "⭐⭐⭐ Advanced: Real-time Chat App",
-            definition: "Multi-user chat with instant messaging",
-            example: "Services: Compute + Database + WebSockets + Storage = ~$30-80/month"
-          },
-          {
-            term: "⭐⭐⭐ Advanced: AI Chatbot",
-            definition: "Chatbot using AI/ML services",
-            example: "Services: Serverless + AI API + Database = ~$10-50/month depending on usage"
-          }
-        ]
-      },
-      {
-        type: 'text',
-        heading: "Learning Path Recommendation",
-        content: "Follow this progression:"
-      },
-      {
-        type: 'list',
-        content: [
-          "1. Deploy a static website (learn storage + CDN)",
-          "2. Add a contact form (learn serverless functions)",
-          "3. Build a todo app (learn databases)",
-          "4. Add user authentication (learn security)",
-          "5. Scale it up (learn load balancing)"
-        ]
-      },
-      {
-        type: 'text',
-        heading: "Next Steps",
-        content: "Now that you understand the basics:"
-      },
-      {
-        type: 'list',
-        content: [
-          "Browse the 'Services' tab to explore specific offerings",
-          "Follow a tutorial for your chosen cloud provider",
-          "Start with free tier to experiment safely",
-          "Join cloud computing communities for help",
-          "Build something, break it, fix it, learn!"
-        ]
-      },
-      {
-        type: 'analogy',
-        heading: "You're Ready!",
-        icon: "🎓",
-        content: "Congratulations! You now understand cloud computing fundamentals. Remember: everyone starts as a beginner. The best way to learn is by building real projects. Start small, stay curious, and don't be afraid to experiment!"
-      }
-    ]
-  },
-  {
-    id: 7,
     title: "Choosing Components for Your Architecture",
     icon: "🏗️",
     description: "Learn how to select the right cloud services for different project needs",
@@ -535,7 +454,7 @@ export const basicsModules: BasicModule[] = [
     ]
   },
   {
-    id: 8,
+    id: 7,
     title: "Connecting Components: Data Flow",
     icon: "🔗",
     description: "Understand how cloud services communicate and pass data between each other",
@@ -605,22 +524,22 @@ export const basicsModules: BasicModule[] = [
         heading: "Do's and Don'ts",
         content: [
           {
-            term: "✅ DO: Use Load Balancers",
+            term: "DO: Use Load Balancers",
             definition: "Spread traffic across multiple servers for reliability",
             example: "Load Balancer → [Server 1, Server 2, Server 3]. If one fails, others handle traffic."
           },
           {
-            term: "✅ DO: Add Caching Layers",
+            term: "DO: Add Caching Layers",
             definition: "Put a cache between your app and database for speed",
             example: "App → ElastiCache → RDS. Frequent queries hit cache (fast!), not database."
           },
           {
-            term: "❌ DON'T: Create Circular Dependencies",
+            term: "DON'T: Create Circular Dependencies",
             definition: "Avoid A calls B, B calls A - creates loops",
             example: "Bad: Lambda A triggers Lambda B, Lambda B triggers Lambda A = infinite loop!"
           },
           {
-            term: "❌ DON'T: Tightly Couple Everything",
+            term: "DON'T: Tightly Couple Everything",
             definition: "Don't make every service talk to every other service",
             example: "Use a queue or event bus as a central hub instead of direct connections everywhere."
           }
@@ -650,7 +569,7 @@ export const basicsModules: BasicModule[] = [
     ]
   },
   {
-    id: 9,
+    id: 8,
     title: "Designing for Scale and Reliability",
     icon: "📈",
     description: "Learn principles for building cloud systems that handle growth and failures",
@@ -784,7 +703,7 @@ export const basicsModules: BasicModule[] = [
     ]
   },
   {
-    id: 10,
+    id: 9,
     title: "Hands-On: Your First Challenge Walkthrough",
     icon: "🎯",
     description: "Step-by-step guide to solving an easy cloud architecture challenge",
@@ -830,12 +749,12 @@ export const basicsModules: BasicModule[] = [
       {
         type: 'list',
         content: [
-          "✅ Keep existing Lambda and RDS unchanged (don't remove them)",
-          "✅ Cache frequently accessed data",
-          "✅ Reduce database query load by 70%",
-          "✅ Improve response time from 800ms to under 200ms",
-          "✅ Handle cache invalidation properly",
-          "✅ Stay within $40/month budget"
+          "Keep existing Lambda and RDS unchanged (don't remove them)",
+          "Cache frequently accessed data",
+          "Reduce database query load by 70%",
+          "Improve response time from 800ms to under 200ms",
+          "Handle cache invalidation properly",
+          "Stay within $40/month budget"
         ]
       },
       {
@@ -846,11 +765,11 @@ export const basicsModules: BasicModule[] = [
       {
         type: 'list',
         content: [
-          "1️⃣ User sends request to Lambda",
-          "2️⃣ Lambda queries RDS database (slow! 600-800ms)",
-          "3️⃣ Database searches, finds data, returns it",
-          "4️⃣ Lambda sends response to user",
-          "🐌 Total time: ~800ms (too slow for good UX)"
+          "User sends request to Lambda",
+          "Lambda queries RDS database (slow! 600-800ms)",
+          "Database searches, finds data, returns it",
+          "Lambda sends response to user",
+          "Total time: ~800ms (too slow for good UX)"
         ]
       },
       {
@@ -868,17 +787,17 @@ export const basicsModules: BasicModule[] = [
         heading: "Service Options Analysis",
         content: [
           {
-            term: "❌ Another Database?",
+            term: "Another Database?",
             definition: "No - we'd still be querying a database, just a different one",
             example: "Doesn't solve the speed problem"
           },
           {
-            term: "❌ Bigger RDS Instance?",
+            term: "Bigger RDS Instance?",
             definition: "Vertical scaling helps but wastes money",
             example: "db.t3.large costs $90/month, only 2x faster. Not enough improvement."
           },
           {
-            term: "✅ Add a Cache! (ElastiCache/Redis)",
+            term: "Add a Cache! (ElastiCache/Redis)",
             definition: "In-memory data store - 100x faster than database",
             example: "Store frequent queries in RAM. Reads take 5-10ms instead of 600ms!"
           }
@@ -892,12 +811,12 @@ export const basicsModules: BasicModule[] = [
       {
         type: 'list',
         content: [
-          "1️⃣ User sends request to Lambda",
-          "2️⃣ Lambda checks ElastiCache first (5-10ms)",
-          "3️⃣ If data is in cache (cache hit) → return immediately ⚡ (150ms total)",
-          "4️⃣ If data NOT in cache (cache miss) → query RDS (600ms)",
-          "5️⃣ Store result in cache for next time",
-          "6️⃣ Return data to user"
+          "User sends request to Lambda",
+          "Lambda checks ElastiCache first (5-10ms)",
+          "If data is in cache (cache hit) → return immediately (150ms total)",
+          "If data NOT in cache (cache miss) → query RDS (600ms)",
+          "Store result in cache for next time",
+          "Return data to user"
         ]
       },
       {
@@ -990,12 +909,12 @@ export const basicsModules: BasicModule[] = [
       {
         type: 'list',
         content: [
-          "🎯 Identify bottlenecks BEFORE choosing solutions (database was the bottleneck)",
-          "💡 Caching is perfect for read-heavy workloads with repetitive queries",
-          "🔗 Architecture is about data flow: Lambda → Cache → Database (fallback)",
-          "💰 Always validate your solution meets ALL constraints (cost, performance, requirements)",
-          "⚡ Small additions can have huge impact (one cache = 4x speed improvement!)",
-          "🧠 Think in patterns: this cache pattern applies to thousands of real scenarios"
+          "Identify bottlenecks BEFORE choosing solutions (database was the bottleneck)",
+          "Caching is perfect for read-heavy workloads with repetitive queries",
+          "Architecture is about data flow: Lambda → Cache → Database (fallback)",
+          "Always validate your solution meets ALL constraints (cost, performance, requirements)",
+          "Small additions can have huge impact (one cache = 4x speed improvement!)",
+          "Think in patterns: this cache pattern applies to thousands of real scenarios"
         ]
       },
       {
@@ -1012,11 +931,11 @@ export const basicsModules: BasicModule[] = [
       {
         type: 'list',
         content: [
-          "🎮 Try Challenge #1: 'Simple Static Website Hosting' (easiest one)",
-          "📝 Try Challenge #8: 'Add Caching to Slow API' (the one we just walked through!)",
-          "💪 Once comfortable, attempt Medium challenges",
-          "🏆 Join the leaderboard and compete with others",
-          "🌐 Apply these patterns to your own projects"
+          "Try Challenge #1: 'Simple Static Website Hosting' (easiest one)",
+          "Try Challenge #8: 'Add Caching to Slow API' (the one we just walked through!)",
+          "Once comfortable, attempt Medium challenges",
+          "Join the leaderboard and compete with others",
+          "Apply these patterns to your own projects"
         ]
       }
     ]

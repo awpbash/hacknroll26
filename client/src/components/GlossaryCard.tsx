@@ -80,16 +80,16 @@ const GlossaryCard: React.FC<GlossaryCardProps> = ({ term }) => {
 };
 
 const Card = styled.div<{ $isExpanded: boolean }>`
-  background: white;
-  border: 2px solid ${props => props.$isExpanded ? '#667eea' : '#e2e8f0'};
+  background: var(--bg-secondary);
+  border: 2px solid ${props => props.$isExpanded ? 'var(--accent-primary)' : 'var(--border-color)'};
   border-radius: 12px;
   padding: 1.25rem;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
 `;
@@ -125,8 +125,8 @@ const ExpandIcon = styled.div<{ $isExpanded: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${props => props.$isExpanded ? '#667eea' : '#e2e8f0'};
-  color: ${props => props.$isExpanded ? 'white' : '#666'};
+  background: ${props => props.$isExpanded ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
+  color: ${props => props.$isExpanded ? 'white' : 'var(--text-secondary)'};
   border-radius: 50%;
   font-weight: bold;
   font-size: 1.2rem;
@@ -136,21 +136,21 @@ const ExpandIcon = styled.div<{ $isExpanded: boolean }>`
 const TermName = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 `;
 
 const Definition = styled.p`
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-secondary);
   margin: 0;
 `;
 
 const ExpandedContent = styled.div`
   margin-top: 1.25rem;
   padding-top: 1.25rem;
-  border-top: 2px solid #f1f5f9;
+  border-top: 2px solid var(--border-color);
   animation: slideDown 0.3s ease;
 
   @keyframes slideDown {
@@ -182,14 +182,14 @@ const SectionTitle = styled.h4`
   display: inline;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   margin: 0;
 `;
 
 const SectionText = styled.p`
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-secondary);
   margin: 0.5rem 0 0 0;
   padding-left: 1.6rem;
 `;
@@ -203,13 +203,13 @@ const RelatedTerms = styled.div`
 `;
 
 const RelatedTag = styled.span`
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 `;
 
 export default GlossaryCard;

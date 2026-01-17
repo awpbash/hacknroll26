@@ -213,51 +213,10 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "While all offer AI services, GCP has strong data analytics and machine learning tools (Google's expertise). But AWS and Azure also have excellent AI services!"
   },
 
-  // Module 6: Your First Cloud Projects
+  // Module 6: Choosing Components for Your Architecture
   {
     id: 16,
     moduleId: 6,
-    question: "What's a good first cloud project for absolute beginners?",
-    options: [
-      "Build a real-time multiplayer game",
-      "Deploy a static website (HTML/CSS/JS)",
-      "Create a machine learning model",
-      "Set up a multi-region database cluster"
-    ],
-    correctAnswer: 1,
-    explanation: "A static website is perfect for beginners - just upload HTML/CSS/JS to object storage and enable website hosting. Costs ~$1-5/month and teaches storage + CDN basics."
-  },
-  {
-    id: 17,
-    moduleId: 6,
-    question: "What services would you need for a simple photo gallery app?",
-    options: [
-      "Only storage",
-      "Storage + Database + Compute",
-      "Only a database",
-      "Only serverless functions"
-    ],
-    correctAnswer: 1,
-    explanation: "You'd need: Storage (save photos), Database (track photo info/captions), and Compute (run the app logic). This is a great intermediate project!"
-  },
-  {
-    id: 18,
-    moduleId: 6,
-    question: "What's the best way to learn cloud computing?",
-    options: [
-      "Just read documentation, never build anything",
-      "Memorize all services from all providers",
-      "Build real projects, break things, and learn from mistakes",
-      "Watch videos but never try anything yourself"
-    ],
-    correctAnswer: 2,
-    explanation: "The best way to learn is by doing! Start with small projects, experiment with services, break things (in a safe environment), and learn from the experience. Theory + Practice = Mastery."
-  },
-
-  // Module 7: Choosing Components for Your Architecture
-  {
-    id: 19,
-    moduleId: 7,
     question: "Your app needs to run background tasks that process user-uploaded videos. Which service type should you choose?",
     options: [
       "Storage (S3) - it stores videos",
@@ -269,8 +228,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Compute services (Lambda or EC2) execute code. To process videos, you need processing power to run encoding/compression algorithms. Storage holds the videos, but compute processes them."
   },
   {
-    id: 20,
-    moduleId: 7,
+    id: 17,
+    moduleId: 6,
     question: "You're building a blog with 1000 posts. Users search for posts by keyword. What should you use?",
     options: [
       "Just storage (S3) - store posts as files",
@@ -282,8 +241,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Databases are perfect for structured, searchable data. You need to query posts by keyword, author, date, etc. Storage is for files, not searchable structured content."
   },
   {
-    id: 21,
-    moduleId: 7,
+    id: 18,
+    moduleId: 6,
     question: "What's a common beginner mistake when choosing components?",
     options: [
       "Using too many services for simple projects",
@@ -295,10 +254,10 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Over-engineering is a classic mistake! Beginners often add unnecessary complexity. Start simple: one server, one database. Add services only when you feel the pain of not having them."
   },
 
-  // Module 8: Connecting Components: Data Flow
+  // Module 7: Connecting Components: Data Flow
   {
-    id: 22,
-    moduleId: 8,
+    id: 19,
+    moduleId: 7,
     question: "What is a 'Direct Connection (Request-Response)' pattern?",
     options: [
       "Service A triggers Service B but doesn't wait for response",
@@ -310,8 +269,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Request-Response means Service A sends a request and waits for Service B's response before continuing. Like asking someone a question and waiting for their answer."
   },
   {
-    id: 23,
-    moduleId: 8,
+    id: 20,
+    moduleId: 7,
     question: "Why should you add a cache between your app and database?",
     options: [
       "Caches make databases more secure",
@@ -323,8 +282,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Caches store frequently accessed data in fast memory (RAM). When your app needs that data again, it gets it from cache (5ms) instead of database (500ms). Much faster!"
   },
   {
-    id: 24,
-    moduleId: 8,
+    id: 21,
+    moduleId: 7,
     question: "What's wrong with creating circular dependencies (A calls B, B calls A)?",
     options: [
       "It's the recommended best practice",
@@ -336,10 +295,10 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Circular dependencies create loops: A triggers B, B triggers A, A triggers B... infinite! This causes crashes, wasted resources, and makes it impossible to understand data flow."
   },
 
-  // Module 9: Designing for Scale and Reliability
+  // Module 8: Designing for Scale and Reliability
   {
-    id: 25,
-    moduleId: 9,
+    id: 22,
+    moduleId: 8,
     question: "What's the difference between vertical and horizontal scaling?",
     options: [
       "Vertical = add more servers, Horizontal = bigger server",
@@ -351,8 +310,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Vertical scaling (scaling up) = upgrade to a bigger server (more CPU/RAM). Horizontal scaling (scaling out) = add more servers working together. Horizontal scales infinitely!"
   },
   {
-    id: 26,
-    moduleId: 9,
+    id: 23,
+    moduleId: 8,
     question: "Why should you design for failure in cloud architecture?",
     options: [
       "Because your code will always have bugs",
@@ -364,8 +323,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "In distributed systems, failures are inevitable: hard drives die, networks have hiccups, data centers lose power. Great architecture assumes failure and handles it gracefully with backups and redundancy."
   },
   {
-    id: 27,
-    moduleId: 9,
+    id: 24,
+    moduleId: 8,
     question: "What is 'stateless design' and why is it important for scaling?",
     options: [
       "Servers have no state - they can't store any data at all",
@@ -377,10 +336,10 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Stateless means servers don't store user session data locally. Instead, session data lives in a shared cache (Redis). This way, any server can handle any request - easy to add/remove servers!"
   },
 
-  // Module 10: Hands-On Challenge Walkthrough
+  // Module 9: Hands-On Challenge Walkthrough
   {
-    id: 28,
-    moduleId: 10,
+    id: 25,
+    moduleId: 9,
     question: "In the caching challenge, what was the main bottleneck causing slow response times?",
     options: [
       "The Lambda function was too small",
@@ -392,8 +351,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "The problem was every request querying the database (600-800ms). Many queries were repetitive (same data requested multiple times). Databases are slow compared to in-memory caches."
   },
   {
-    id: 29,
-    moduleId: 10,
+    id: 26,
+    moduleId: 9,
     question: "After adding a cache, what happens on a 'cache hit'?",
     options: [
       "The request goes to the database",
@@ -405,8 +364,8 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: "Cache hit = data is already in cache. Lambda gets it from cache memory (~5-10ms) instead of querying database (~600ms). Much faster! Cache misses still go to database, then cache the result."
   },
   {
-    id: 30,
-    moduleId: 10,
+    id: 27,
+    moduleId: 9,
     question: "What's the most important step BEFORE choosing a solution to a challenge?",
     options: [
       "Pick the cheapest service available",

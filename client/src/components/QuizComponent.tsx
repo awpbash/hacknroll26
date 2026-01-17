@@ -164,7 +164,7 @@ const Container = styled.div`
 const ProgressBar = styled.div`
   width: 100%;
   height: 8px;
-  background: #e2e8f0;
+  background: var(--bg-tertiary);
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 2rem;
@@ -193,7 +193,7 @@ const QuestionHeader = styled.div`
 const QuestionNumber = styled.div`
   font-size: 0.9rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
@@ -201,13 +201,13 @@ const QuestionNumber = styled.div`
 const ScoreDisplay = styled.div`
   font-size: 0.9rem;
   font-weight: 600;
-  color: #10b981;
+  color: var(--accent-success);
 `;
 
 const QuestionText = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.6;
   margin: 0 0 1.5rem 0;
 `;
@@ -243,7 +243,7 @@ const AnswerOption = styled.div<{
 
   &:hover {
     ${props => !props.$disabled && `
-      border-color: #667eea;
+      border-color: var(--accent-primary);
       box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
       transform: translateX(4px);
     `}
@@ -256,8 +256,8 @@ const AnswerLetter = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   border-radius: 8px;
   font-weight: 700;
   font-size: 0.9rem;
@@ -267,7 +267,7 @@ const AnswerLetter = styled.div`
 const AnswerText = styled.div`
   flex: 1;
   font-size: 1rem;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.5;
 `;
 
@@ -306,11 +306,11 @@ const ExplanationIcon = styled.div`
 const ExplanationText = styled.p`
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
 
   strong {
-    color: #667eea;
+    color: var(--accent-primary);
   }
 `;
 
@@ -368,21 +368,21 @@ const ResultIcon = styled.div`
 const ResultTitle = styled.h2`
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 1rem 0;
 `;
 
 const ResultScore = styled.div`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   margin-bottom: 1rem;
 `;
 
 const ResultMessage = styled.p`
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-secondary);
   margin: 0 0 2rem 0;
   max-width: 500px;
   margin-left: auto;

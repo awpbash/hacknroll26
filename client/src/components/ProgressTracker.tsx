@@ -74,10 +74,10 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 };
 
 const Container = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 `;
 
 const Header = styled.div`
@@ -87,20 +87,20 @@ const Header = styled.div`
 const Title = styled.h3`
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 0.25rem 0;
 `;
 
 const ProgressText = styled.p`
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 `;
 
 const ProgressBarContainer = styled.div`
   width: 100%;
   height: 32px;
-  background: #e2e8f0;
+  background: var(--bg-tertiary);
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 1.5rem;
@@ -109,7 +109,7 @@ const ProgressBarContainer = styled.div`
 
 const ProgressBarFill = styled.div`
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-cyber);
   transition: width 0.5s ease;
   display: flex;
   align-items: center;
@@ -140,13 +140,13 @@ const ModuleItem = styled.div<{
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   background: ${props =>
-    props.$isCompleted ? '#10b98110' :
-    props.$isCurrent ? '#667eea10' :
-    props.$isLocked ? '#f8fafc' : '#fff'};
+    props.$isCompleted ? 'var(--accent-success)15' :
+    props.$isCurrent ? 'var(--accent-primary)15' :
+    props.$isLocked ? 'var(--bg-tertiary)' : 'var(--bg-secondary)'};
   border: 2px solid ${props =>
-    props.$isCompleted ? '#10b981' :
-    props.$isCurrent ? '#667eea' :
-    props.$isLocked ? '#e2e8f0' : '#e2e8f0'};
+    props.$isCompleted ? 'var(--accent-success)' :
+    props.$isCurrent ? 'var(--accent-primary)' :
+    props.$isLocked ? 'var(--border-color)' : 'var(--border-color)'};
   border-radius: 10px;
   cursor: ${props => props.$isLocked ? 'not-allowed' : 'pointer'};
   opacity: ${props => props.$isLocked ? 0.6 : 1};
@@ -155,7 +155,7 @@ const ModuleItem = styled.div<{
   &:hover {
     ${props => !props.$isLocked && `
       transform: translateX(4px);
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+      box-shadow: var(--shadow-md);
     `}
   }
 `;
@@ -172,20 +172,20 @@ const ModuleText = styled.div`
 const ModuleName = styled.div`
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin-bottom: 0.125rem;
 `;
 
 const ModuleStatus = styled.div`
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-secondary);
 `;
 
 const CompletionBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-cyber);
   padding: 1.25rem;
   border-radius: 12px;
   margin-top: 1.5rem;
@@ -193,10 +193,10 @@ const CompletionBadge = styled.div`
 
   @keyframes celebrationPulse {
     0%, 100% {
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      box-shadow: var(--shadow-md);
     }
     50% {
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      box-shadow: var(--glow-primary);
     }
   }
 `;
