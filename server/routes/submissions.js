@@ -4,51 +4,71 @@ const Submission = require('../models/Submission');
 const Challenge = require('../models/Challenge');
 const User = require('../models/User');
 const ArchitectureEvaluator = require('../utils/evaluator');
-const LLMEvaluator = require('../utils/llmEvaluator');
 const { authenticateToken } = require('../middleware/auth');
 
 // Submit solution
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('\n╔════════════════════════════════════════════════╗');
+    console.log('║  NEW SUBMISSION RECEIVED                       ║');
+    console.log('╚════════════════════════════════════════════════╝');
+
     const { challengeId, architecture, provider } = req.body;
+    console.log(`📋 Challenge ID: ${challengeId}`);
+    console.log(`📋 Provider: ${provider}`);
+    console.log(`📋 Architecture nodes: ${architecture?.nodes?.length || 0}`);
+    console.log(`📋 Architecture edges: ${architecture?.edges?.length || 0}`);
 
     // Validate input
     if (!challengeId || !architecture || !provider) {
+      console.log('❌ Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     // Get challenge
     const challenge = await Challenge.findById(challengeId);
     if (!challenge) {
+      console.log('❌ Challenge not found');
       return res.status(404).json({ message: 'Challenge not found' });
     }
+    console.log(`✅ Challenge found: ${challenge.title}`);
 
-    // Evaluate submission
+    // Evaluate submission with Phase 3 (LLM) if API key is available
     const submissionData = { architecture, provider };
-    const evaluator = new ArchitectureEvaluator(submissionData, challenge);
+
+    // Check if LLM is available
+    const hasLLMKey = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
+    const llmProvider = process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai';
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
+
+    console.log(`\n🔍 LLM Configuration Check:`);
+    console.log(`   - ANTHROPIC_API_KEY present: ${!!process.env.ANTHROPIC_API_KEY}`);
+    console.log(`   - OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
+    console.log(`   - Selected provider: ${llmProvider}`);
+    console.log(`   - Has LLM Key: ${hasLLMKey}`);
+
+    // Create evaluator with LLM enabled (Phase 3) if API key exists
+    console.log(`\n📊 Creating evaluator with LLM ${hasLLMKey ? '✅ ENABLED' : '⊗ DISABLED'}`);
+    const evaluator = new ArchitectureEvaluator(
+      submissionData,
+      challenge,
+      hasLLMKey,  // useLLM - enables Phase 3
+      hasLLMKey ? { apiKey, provider: llmProvider } : null  // llmConfig
+    );
+
+    console.log('🔄 Starting evaluation...\n');
     const evaluation = await evaluator.evaluate();
-
-    // Optional: Use LLM for additional evaluation
-    let llmEvaluation = null;
-    if (process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY) {
-      const llmProvider = process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai';
-      const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
-      const llmEvaluator = new LLMEvaluator(apiKey, llmProvider);
-
-      llmEvaluation = await llmEvaluator.evaluateArchitecture(
-        { ...architecture, provider },
-        challenge
-      );
-
-      // Combine scores if LLM evaluation succeeded
-      if (llmEvaluation.usedLLM) {
-        // Weighted average: 60% rule-based, 40% LLM
-        evaluation.score = Math.round(evaluation.score * 0.6 + llmEvaluation.overallScore * 0.4);
-        evaluation.llmFeedback = llmEvaluation.llmFeedback;
-      }
-    }
+    console.log('\n✅ Evaluation complete!');
+    console.log('📊 Results:', {
+      passed: evaluation.passed,
+      score: evaluation.score,
+      cost: evaluation.cost,
+      complexity: evaluation.complexity,
+      hasPhase3: !!evaluation.phases?.phase3
+    });
 
     // Create submission record
+    console.log('💾 Creating submission record...');
     const submission = await Submission.create({
       userId: req.userId,
       challengeId,
@@ -57,12 +77,15 @@ router.post('/', authenticateToken, async (req, res) => {
       evaluation,
       status: evaluation.status
     });
+    console.log(`✅ Submission created with ID: ${submission.id}`);
 
     // Update challenge statistics
+    console.log('📈 Updating challenge statistics...');
     await Challenge.incrementSubmissions(challengeId, evaluation.passed);
 
     // Update user record if accepted
     if (evaluation.passed) {
+      console.log('🎉 Submission passed! Updating user record...');
       const user = await User.findById(req.userId);
 
       // Check if user already solved this challenge
@@ -107,6 +130,11 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
+    console.log('📤 Sending response to client...\n');
+    console.log('╔════════════════════════════════════════════════╗');
+    console.log('║  SUBMISSION PROCESSED SUCCESSFULLY             ║');
+    console.log('╚════════════════════════════════════════════════╝\n');
+
     res.json({
       submission: {
         id: submission.id,
@@ -115,7 +143,9 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('\n❌❌❌ ERROR PROCESSING SUBMISSION ❌❌❌');
+    console.error('Error message:', error.message);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

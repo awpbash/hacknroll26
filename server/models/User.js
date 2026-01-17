@@ -84,7 +84,7 @@ class User {
       architectureData: challengeData.architectureData || null,
       cost: challengeData.cost || 0,
       complexity: challengeData.complexity || 0,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
+      timestamp: admin.firestore.Timestamp.now() // Use Timestamp.now() instead of serverTimestamp() for arrays
     };
 
     await usersCollection.doc(userId).update({

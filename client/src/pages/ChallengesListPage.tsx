@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { mockChallenges } from '../data/mockData';
+import { fetchChallenges } from '../services/challengesApi';
 import { Challenge } from '../types';
 
 const PageContainer = styled.div`
@@ -179,8 +179,26 @@ const ChallengesListPage: React.FC = () => {
   const navigate = useNavigate();
   const [difficultyFilter, setDifficultyFilter] = useState<string>('All');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const filteredChallenges: Challenge[] = mockChallenges.filter((challenge: Challenge) => {
+  // Load challenges from API on mount
+  useEffect(() => {
+    const loadChallenges = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchChallenges();
+        setChallenges(data);
+      } catch (error) {
+        console.error('Error loading challenges:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadChallenges();
+  }, []);
+
+  const filteredChallenges: Challenge[] = challenges.filter((challenge: Challenge) => {
     const matchesDifficulty = difficultyFilter === 'All' || challenge.difficulty === difficultyFilter;
     const matchesCategory = categoryFilter === 'All' || challenge.category === categoryFilter;
     return matchesDifficulty && matchesCategory;
@@ -189,6 +207,16 @@ const ChallengesListPage: React.FC = () => {
   const handleChallengeClick = (challengeId: string): void => {
     navigate(`/challenge/${challengeId}`);
   };
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Loading challenges...
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>

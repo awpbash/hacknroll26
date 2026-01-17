@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { mockChallenges } from '../data/mockData';
+import { fetchChallenges } from '../services/challengesApi';
 import { Challenge } from '../types';
 
 const PageContainer = styled.div`
@@ -253,6 +253,8 @@ interface Topic {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState<string>('All Topics');
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const topics: Topic[] = [
     { name: 'All Topics', icon: '📋' },
@@ -263,9 +265,35 @@ const HomePage: React.FC = () => {
     { name: 'Full-Stack', icon: '🏗️' }
   ];
 
+  // Load challenges from API on mount
+  useEffect(() => {
+    const loadChallenges = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchChallenges();
+        setChallenges(data);
+      } catch (error) {
+        console.error('Error loading challenges:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadChallenges();
+  }, []);
+
   const filteredChallenges: Challenge[] = selectedTopic === 'All Topics'
-    ? mockChallenges
-    : mockChallenges.filter((c: Challenge) => c.category === selectedTopic);
+    ? challenges
+    : challenges.filter((c: Challenge) => c.category === selectedTopic);
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Loading challenges...
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -291,7 +319,7 @@ const HomePage: React.FC = () => {
           <CardBadge>Challenge</CardBadge>
           <CardTitle>30 Days Challenge</CardTitle>
           <CardDescription>
-            Complete all {mockChallenges.length} cloud architecture challenges in 30 days.
+            Complete all {challenges.length} cloud architecture challenges in 30 days.
           </CardDescription>
           <CardButton>Start Learning</CardButton>
         </FeaturedCard>

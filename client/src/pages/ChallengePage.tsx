@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ArchitectureBuilder from '../components/ArchitectureBuilder';
-import { mockChallenges } from '../data/mockData';
 import { fetchCloudServices } from '../services/cloudServicesApi';
+import { fetchChallengeById } from '../services/challengesApi';
 import { useAuth } from '../context/AuthContext';
 import { providerLogos } from '../data/providerLogos';
-import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, ArchitectureEdge, CloudServicesData } from '../types';
+import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, CloudServicesData } from '../types';
 import { formatPrice, formatToSignificantFigures } from '../utils/formatting';
+import { submissionsAPI } from '../services/api';
 
 const PageContainer = styled.div`
   max-width: 100%;
@@ -533,7 +534,7 @@ interface EvaluationResult {
   warnings: string[];
   llmFeedback: {
     summary: string;
-  };
+  } | null;
 }
 
 interface SubmissionResult {
@@ -620,125 +621,6 @@ const SolutionsPanel: React.FC<SolutionsPanelProps> = ({ challenge }) => {
   );
 };
 
-// Mock evaluation function
-const evaluateArchitecture = (challenge: Challenge, architecture: ArchitectureState, provider: CloudProvider): EvaluationResult => {
-  const nodes: ArchitectureNode[] = architecture.nodes || [];
-  const edges: ArchitectureEdge[] = architecture.edges || [];
-
-  // Calculate total cost
-  let totalCost: number = 0;
-  nodes.forEach((node: ArchitectureNode) => {
-    const cost = node.data?.cost;
-    if (cost) {
-      totalCost += parseFloat(cost.toString());
-    }
-  });
-
-  // Check constraints
-  const errors: string[] = [];
-  const feedback: string[] = [];
-  const warnings: string[] = [];
-  let score: number = 0;
-
-  // Check max cost constraint
-  if (challenge.constraints.maxCost && totalCost > challenge.constraints.maxCost) {
-    errors.push(`Cost ($${formatToSignificantFigures(totalCost)}/month) exceeds budget ($${formatToSignificantFigures(challenge.constraints.maxCost)}/month)`);
-  } else {
-    feedback.push(`Cost optimization: Excellent! Your solution costs $${formatToSignificantFigures(totalCost)}/month`);
-    score += 30;
-  }
-
-  // Check required services
-  const requiredCategories: string[] = challenge.constraints.requiredServices || [];
-  const usedCategories: string[] = [...new Set(nodes.map((n: ArchitectureNode) => n.data?.category).filter(Boolean))];
-
-  requiredCategories.forEach((required: string) => {
-    if (!usedCategories.includes(required)) {
-      errors.push(`Missing required service category: ${required}`);
-    } else {
-      score += 15;
-    }
-  });
-
-  // Check if architecture has nodes
-  if (nodes.length === 0) {
-    errors.push('Architecture is empty. Please add services.');
-  } else {
-    feedback.push(`Architecture complexity: ${nodes.length} services, ${edges.length} connections`);
-    score += 15;
-  }
-
-  // Check if services are connected
-  if (edges.length > 0) {
-    feedback.push('Good: Services are properly connected');
-    score += 15;
-  } else if (nodes.length > 1) {
-    errors.push('Services should be connected to show data flow');
-  }
-
-  // Check input/output specifications
-  let nodesWithIO: number = 0;
-  let nodesWithoutIO: number = 0;
-
-  nodes.forEach((node: ArchitectureNode) => {
-    const hasInput = node.data?.inputSpec && node.data.inputSpec.trim().length > 0;
-    const hasOutput = node.data?.outputSpec && node.data.outputSpec.trim().length > 0;
-
-    if (hasInput || hasOutput) {
-      nodesWithIO++;
-    } else {
-      nodesWithoutIO++;
-    }
-  });
-
-  if (nodesWithIO > 0) {
-    feedback.push(`Data flow documentation: ${nodesWithIO} of ${nodes.length} services have input/output specifications`);
-    score += Math.min(15, (nodesWithIO / nodes.length) * 15);
-  }
-
-  if (nodesWithoutIO > 0 && nodes.length > 2) {
-    warnings.push(`Consider adding input/output specifications to ${nodesWithoutIO} services for better documentation`);
-  }
-
-  // Check for grouped components
-  const groupedNodes = nodes.filter((n: ArchitectureNode) => (n.data as any)?.groupId);
-  if (groupedNodes.length > 0) {
-    const groups = [...new Set(groupedNodes.map((n: ArchitectureNode) => (n.data as any).groupId))];
-    feedback.push(`Component organization: ${groups.length} logical groups identified`);
-    score += 10;
-  }
-
-  // Validate edge connections make sense
-  const connectedNodeIds = new Set<string>();
-  edges.forEach((edge: ArchitectureEdge) => {
-    connectedNodeIds.add(edge.source);
-    connectedNodeIds.add(edge.target);
-  });
-
-  const isolatedNodes = nodes.filter((n: ArchitectureNode) => !connectedNodeIds.has(n.id));
-  if (isolatedNodes.length > 0 && nodes.length > 1) {
-    warnings.push(`${isolatedNodes.length} service(s) are not connected to the architecture`);
-  }
-
-  const passed: boolean = errors.length === 0;
-
-  return {
-    passed,
-    score: passed ? Math.min(100, score) : 0,
-    totalCost,
-    complexity: nodes.length,
-    connections: edges.length,
-    feedback,
-    errors,
-    warnings,
-    llmFeedback: passed ? {
-      summary: `Great job! Your architecture meets all requirements and stays within budget. The solution demonstrates good understanding of ${provider} services, cost optimization, and proper documentation of data flows.`
-    } : {
-      summary: 'Your solution needs improvement. Review the errors below and adjust your architecture accordingly. Consider adding input/output specifications to better document your data flows.'
-    }
-  };
-};
-
 const ChallengePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -767,19 +649,30 @@ const ChallengePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Load challenge from mock data
-    const foundChallenge = mockChallenges.find((c: Challenge) => c.id === id);
-    setChallenge(foundChallenge || null);
+    const loadChallenge = async () => {
+      try {
+        setLoading(true);
+        const challengeData = await fetchChallengeById(id!);
+        setChallenge(challengeData);
 
-    // Load existing infrastructure if present
-    if (foundChallenge?.existingInfrastructure) {
-      setArchitecture({
-        nodes: foundChallenge.existingInfrastructure.nodes || [],
-        edges: foundChallenge.existingInfrastructure.edges || []
-      });
+        // Load existing infrastructure if present
+        if (challengeData?.existingInfrastructure) {
+          setArchitecture({
+            nodes: challengeData.existingInfrastructure.nodes || [],
+            edges: challengeData.existingInfrastructure.edges || []
+          });
+        }
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+        setChallenge(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      loadChallenge();
     }
-
-    setLoading(false);
   }, [id]);
 
   const handleSubmit = async (): Promise<void> => {
@@ -801,17 +694,65 @@ const ChallengePage: React.FC = () => {
     setSubmitting(true);
     setResult(null);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const evaluation = evaluateArchitecture(challenge, architecture, selectedProvider);
+    try {
+      console.log('🚀 Submitting to backend API...');
+      console.log('Challenge ID:', challenge.id);
+      console.log('Provider:', selectedProvider);
+      console.log('Architecture:', architecture);
 
-      setResult({
-        status: evaluation.passed ? 'Accepted ✓' : 'Failed ✗',
-        evaluation
+      // Call the real backend API
+      const response = await submissionsAPI.submit({
+        challengeId: challenge.id,
+        architecture: {
+          nodes: architecture.nodes,
+          edges: architecture.edges
+        },
+        provider: selectedProvider,
+        totalCost: 0, // Backend will calculate this
+        services: [] // Backend will extract this
       });
 
+      console.log('✅ Backend response:', response.data);
+
+      // Map backend response to frontend format
+      const backendEval = response.data.submission.evaluation;
+
+      setResult({
+        status: backendEval.status || (backendEval.passed ? 'Accepted ✓' : 'Failed ✗'),
+        evaluation: {
+          passed: backendEval.passed,
+          score: backendEval.score,
+          totalCost: backendEval.cost,
+          complexity: backendEval.complexity,
+          connections: architecture.edges.length,
+          feedback: backendEval.feedback || [],
+          errors: backendEval.errors || [],
+          warnings: backendEval.phases?.phase2?.warnings?.map((w: any) => w.message) || [],
+          llmFeedback: backendEval.phases?.phase3?.llmFeedback || null
+        }
+      });
+
+    } catch (error: any) {
+      console.error('❌ Submission error:', error);
+
+      // Show error to user
+      setResult({
+        status: 'Error',
+        evaluation: {
+          passed: false,
+          score: 0,
+          totalCost: 0,
+          complexity: 0,
+          connections: 0,
+          feedback: [],
+          errors: [error.response?.data?.message || error.message || 'Failed to submit solution. Please try again.'],
+          warnings: [],
+          llmFeedback: null
+        }
+      });
+    } finally {
       setSubmitting(false);
-    }, 1500);
+    }
   };
 
   if (loading) {

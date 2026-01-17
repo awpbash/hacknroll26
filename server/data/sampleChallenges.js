@@ -18,6 +18,156 @@ const sampleChallenges = [
       maxServices: 4
     },
     category: "Storage",
+    editorial: `
+      <h2>Approach Overview</h2>
+      <p>Static website hosting is one of the most cost-effective cloud architecture patterns. The key is to separate storage from distribution to achieve global performance at minimal cost.</p>
+
+      <h3>Core Components</h3>
+      <ul>
+        <li><strong>Object Storage:</strong> Store your HTML, CSS, JavaScript, and media files in S3, Azure Blob Storage, or GCS</li>
+        <li><strong>CDN (Content Delivery Network):</strong> Use CloudFront, Azure CDN, or Cloud CDN to cache and serve content from edge locations worldwide</li>
+      </ul>
+
+      <h3>Cost Optimization Strategies</h3>
+      <p>The typical cost breakdown for a small static site:</p>
+      <ul>
+        <li>Storage: ~$0.23/month for 10GB</li>
+        <li>Requests: ~$0.40/month for 100K requests</li>
+        <li>Data Transfer: $8-9/month for 100GB (the main cost driver)</li>
+      </ul>
+
+      <p><strong>Pro tip:</strong> Most CDNs offer a generous free tier. CloudFront includes 1TB of data transfer free for the first year!</p>
+
+      <h3>Security Best Practices</h3>
+      <ul>
+        <li>Enable HTTPS using free SSL certificates from your CDN provider</li>
+        <li>Block direct access to your storage bucket - only allow CDN access</li>
+        <li>Use CloudFront Origin Access Identity (OAI) for AWS or similar features for other providers</li>
+      </ul>
+
+      <h2>Architecture Pattern</h2>
+      <p>The optimal architecture is simple:</p>
+      <code>Users → CDN → Object Storage</code>
+
+      <p>This pattern scales automatically, requires zero server management, and costs less than $10/month for most small to medium traffic websites.</p>
+    `,
+    solutions: [
+      {
+        id: 'sol-1-1',
+        author: 'CloudArchitect',
+        title: 'AWS S3 + CloudFront Solution',
+        architecture: {
+          nodes: [
+            {
+              id: 'sol1-s3',
+              type: 'serviceNode',
+              position: { x: 100, y: 150 },
+              data: {
+                serviceName: 'S3',
+                customLabel: 'Static Website',
+                category: 'storage',
+                cost: 0.23,
+                specs: '10GB storage',
+                inputSpec: 'HTML/CSS/JS files',
+                outputSpec: 'Web assets'
+              }
+            },
+            {
+              id: 'sol1-cloudfront',
+              type: 'serviceNode',
+              position: { x: 450, y: 150 },
+              data: {
+                serviceName: 'CloudFront',
+                customLabel: 'Global CDN',
+                category: 'networking',
+                cost: 8.50,
+                specs: '100GB transfer',
+                inputSpec: 'User requests',
+                outputSpec: 'Cached content'
+              }
+            }
+          ],
+          edges: [
+            {
+              id: 'sol1-e1',
+              source: 'sol1-s3',
+              target: 'sol1-cloudfront',
+              animated: true
+            }
+          ]
+        },
+        explanation: `
+          <p>This solution uses the classic AWS combination of S3 for storage and CloudFront for content delivery.</p>
+          <h3>Why This Works</h3>
+          <ul>
+            <li><strong>S3 Static Website Hosting:</strong> Enable static website hosting on your S3 bucket to serve index.html by default</li>
+            <li><strong>CloudFront CDN:</strong> Caches content at 200+ edge locations worldwide for fast delivery</li>
+            <li><strong>Cost Breakdown:</strong> $0.23 storage + $8.50 transfer = $8.73/month total</li>
+          </ul>
+          <p>This solution stays well under the $10 budget and provides excellent performance globally.</p>
+        `,
+        totalCost: 8.73,
+        upvotes: 342,
+        provider: 'AWS'
+      },
+      {
+        id: 'sol-1-2',
+        author: 'AzureExpert',
+        title: 'Azure Blob Storage + CDN',
+        architecture: {
+          nodes: [
+            {
+              id: 'sol2-blob',
+              type: 'serviceNode',
+              position: { x: 100, y: 150 },
+              data: {
+                serviceName: 'Azure Blob Storage',
+                customLabel: 'Static Content',
+                category: 'storage',
+                cost: 0.18,
+                specs: '10GB storage',
+                inputSpec: 'Static files',
+                outputSpec: 'Web content'
+              }
+            },
+            {
+              id: 'sol2-cdn',
+              type: 'serviceNode',
+              position: { x: 450, y: 150 },
+              data: {
+                serviceName: 'Azure CDN',
+                customLabel: 'Edge Network',
+                category: 'networking',
+                cost: 8.10,
+                specs: '100GB transfer',
+                inputSpec: 'HTTP requests',
+                outputSpec: 'Cached responses'
+              }
+            }
+          ],
+          edges: [
+            {
+              id: 'sol2-e1',
+              source: 'sol2-blob',
+              target: 'sol2-cdn',
+              animated: true
+            }
+          ]
+        },
+        explanation: `
+          <p>Azure provides a similar solution with Blob Storage and Azure CDN, often at slightly lower costs.</p>
+          <h3>Key Features</h3>
+          <ul>
+            <li><strong>Static Website Hosting:</strong> Blob Storage has built-in static website support</li>
+            <li><strong>Integrated CDN:</strong> Azure CDN integrates seamlessly with Blob Storage</li>
+            <li><strong>Cost Advantage:</strong> Slightly cheaper than AWS at $8.28/month</li>
+          </ul>
+        `,
+        totalCost: 8.28,
+        upvotes: 187,
+        provider: 'Azure'
+      }
+    ],
     testCases: [
       {
         input: "10GB storage, 100GB bandwidth/month",
@@ -59,6 +209,128 @@ const sampleChallenges = [
       maxServices: 6
     },
     category: "Serverless",
+    editorial: `
+      <h2>Serverless API Architecture</h2>
+      <p>Serverless architectures are perfect for APIs because they automatically scale from zero to millions of requests, and you only pay for what you use.</p>
+
+      <h3>Core Components</h3>
+      <ul>
+        <li><strong>API Gateway:</strong> HTTP endpoint management, request routing, throttling, and API keys</li>
+        <li><strong>Compute Layer:</strong> Lambda, Azure Functions, or Cloud Functions to handle business logic</li>
+        <li><strong>Database:</strong> DynamoDB, Cosmos DB, or Firestore for NoSQL, or Aurora Serverless for SQL</li>
+        <li><strong>Authentication:</strong> Cognito, Auth0, or Firebase Auth for user management</li>
+      </ul>
+
+      <h3>Cost Analysis for 1M Requests/Month</h3>
+      <p>Typical serverless API costs:</p>
+      <ul>
+        <li>API Gateway: ~$3.50 (1M requests)</li>
+        <li>Lambda: ~$2.00 (assuming 200ms avg execution at 512MB)</li>
+        <li>DynamoDB: ~$1.25 (on-demand pricing for typical CRUD operations)</li>
+        <li>Authentication: ~$0 (Cognito free tier covers 50K MAU)</li>
+        <li><strong>Total: ~$6.75/month</strong></li>
+      </ul>
+
+      <h3>Scaling Considerations</h3>
+      <p>Serverless scales automatically, but watch for:</p>
+      <ul>
+        <li><strong>Cold starts:</strong> First request after idle period takes longer (500ms-3s)</li>
+        <li><strong>Concurrent limits:</strong> Lambda has soft limit of 1000 concurrent executions per region</li>
+        <li><strong>Database throttling:</strong> DynamoDB can throttle if you exceed provisioned capacity</li>
+      </ul>
+
+      <h3>Performance Optimization</h3>
+      <code>Client → API Gateway → Lambda → Database</code>
+      <p>For better performance, add caching:</p>
+      <code>Client → API Gateway (Cache) → Lambda → Database</code>
+      <p>API Gateway caching reduces Lambda invocations by 80%+ for read-heavy workloads.</p>
+    `,
+    solutions: [
+      {
+        id: 'sol-2-1',
+        author: 'ServerlessGuru',
+        title: 'AWS Lambda + API Gateway + DynamoDB',
+        architecture: {
+          nodes: [
+            {
+              id: 'sol3-apigw',
+              type: 'serviceNode',
+              position: { x: 50, y: 150 },
+              data: {
+                serviceName: 'API Gateway',
+                customLabel: 'REST API',
+                category: 'networking',
+                cost: 3.50,
+                specs: '1M requests',
+                inputSpec: 'HTTP requests',
+                outputSpec: 'Routed requests'
+              }
+            },
+            {
+              id: 'sol3-lambda',
+              type: 'serviceNode',
+              position: { x: 300, y: 150 },
+              data: {
+                serviceName: 'Lambda',
+                customLabel: 'Business Logic',
+                category: 'serverless',
+                cost: 2.00,
+                specs: '512MB, 200ms avg',
+                inputSpec: 'API events',
+                outputSpec: 'Responses'
+              }
+            },
+            {
+              id: 'sol3-dynamodb',
+              type: 'serviceNode',
+              position: { x: 550, y: 150 },
+              data: {
+                serviceName: 'DynamoDB',
+                customLabel: 'Data Store',
+                category: 'database',
+                cost: 1.25,
+                specs: 'On-demand',
+                inputSpec: 'Queries',
+                outputSpec: 'Data'
+              }
+            }
+          ],
+          edges: [
+            {
+              id: 'sol3-e1',
+              source: 'sol3-apigw',
+              target: 'sol3-lambda',
+              animated: true
+            },
+            {
+              id: 'sol3-e2',
+              source: 'sol3-lambda',
+              target: 'sol3-dynamodb',
+              animated: true
+            }
+          ]
+        },
+        explanation: `
+          <p>The classic AWS serverless stack: API Gateway routes requests to Lambda functions that interact with DynamoDB.</p>
+          <h3>Why This Architecture Works</h3>
+          <ul>
+            <li><strong>Zero Server Management:</strong> AWS manages all infrastructure</li>
+            <li><strong>Auto-scaling:</strong> Handles traffic spikes automatically</li>
+            <li><strong>Cost-Efficient:</strong> Only $6.75/month for 1M requests - far under budget</li>
+            <li><strong>High Availability:</strong> Built-in redundancy across multiple AZs</li>
+          </ul>
+          <h3>Implementation Tips</h3>
+          <ul>
+            <li>Use Lambda Proxy Integration for simplified request/response handling</li>
+            <li>Enable API Gateway caching ($0.02/hour) for read-heavy endpoints</li>
+            <li>Use DynamoDB's on-demand mode for unpredictable traffic</li>
+          </ul>
+        `,
+        totalCost: 6.75,
+        upvotes: 428,
+        provider: 'AWS'
+      }
+    ],
     testCases: [
       {
         input: "1 million API requests/month with data storage",
@@ -102,6 +374,8 @@ const sampleChallenges = [
       maxServices: 10
     },
     category: "Full-Stack",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "10,000 requests/minute, 50GB database",
@@ -152,6 +426,8 @@ const sampleChallenges = [
       maxServices: 8
     },
     category: "Full-Stack",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "100 events/second from IoT devices",
@@ -199,6 +475,8 @@ const sampleChallenges = [
       maxServices: 15
     },
     category: "Full-Stack",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "Primary region failure scenario",
@@ -254,6 +532,8 @@ const sampleChallenges = [
       maxServices: 6
     },
     category: "Serverless",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "100 concurrent users, 1000 requests/hour",
@@ -298,6 +578,8 @@ const sampleChallenges = [
       maxServices: 4
     },
     category: "Database",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "Product search queries from existing e-commerce platform",
@@ -340,6 +622,8 @@ const sampleChallenges = [
       maxServices: 3
     },
     category: "Serverless",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "API with slow database queries",
@@ -379,6 +663,8 @@ const sampleChallenges = [
       maxServices: 6
     },
     category: "Full-Stack",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "Video view events from streaming platform",
@@ -425,6 +711,8 @@ const sampleChallenges = [
       maxServices: 4
     },
     category: "Compute",
+    editorial: "",
+    solutions: [],
     testCases: [
       {
         input: "Photo uploads requiring automatic tagging",

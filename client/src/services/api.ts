@@ -32,19 +32,25 @@ export interface AuthResponse {
 export interface Challenge {
   id: string;
   title: string;
-  difficulty: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   description: string;
   requirements: string[];
   constraints: {
-    maxCost: number;
-    requiredServices: string[];
-    optionalServices: string[];
+    maxCost?: number;
+    requiredServices?: string[];
+    optionalServices?: string[];
+    minServices?: number;
+    maxServices?: number;
   };
   category: string;
+  acceptanceRate?: number;
+  submissions?: number;
   existingInfrastructure?: {
     nodes: any[];
     edges: any[];
   };
+  editorial?: string;
+  solutions?: any[];
 }
 
 export interface ChallengeStats {
@@ -56,16 +62,34 @@ export interface ChallengeStats {
 
 export interface Submission {
   challengeId: string;
-  architecture: any;
-  totalCost: number;
-  services: any[];
+  architecture: {
+    nodes: any[];
+    edges: any[];
+  };
+  provider: string;
+  totalCost?: number; // Optional - backend calculates
+  services?: any[]; // Optional - backend extracts
 }
 
 export interface SubmissionResponse {
-  success: boolean;
-  score?: number;
-  feedback?: string;
-  message?: string;
+  submission: {
+    id: string;
+    status: string;
+    evaluation: {
+      passed: boolean;
+      score: number;
+      cost: number;
+      complexity: number;
+      feedback: string[];
+      errors: string[];
+      status: string;
+      phases?: {
+        phase1?: any;
+        phase2?: any;
+        phase3?: any;
+      };
+    };
+  };
 }
 
 export interface LeaderboardEntry {

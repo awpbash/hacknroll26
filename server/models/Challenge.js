@@ -26,6 +26,8 @@ class Challenge {
         complexity: 0,
         explanation: ''
       },
+      editorial: challengeData.editorial || null,
+      solutions: challengeData.solutions || [],
       acceptanceRate: 0,
       submissions: 0,
       accepted: 0,

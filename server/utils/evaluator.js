@@ -1,12 +1,40 @@
 const cloudServices = require('../data/cloudServices');
+const LLMEvaluator = require('./llmEvaluator');
 
+/**
+ * Architecture Evaluator - Three-Phase Evaluation System
+ *
+ * Phase 1 (REQUIRED): Basic validation - cost, connectivity, required services, complexity
+ *                     STOPS evaluation if fails
+ *
+ * Phase 2 (RECOMMENDED): Rule-based pattern validation - best practices checks
+ *                        Adds warnings and score penalties, doesn't stop
+ *
+ * Phase 3 (OPTIONAL): LLM-based deep evaluation - functionality, scalability, cost, practices
+ *                     Provides detailed feedback and score adjustments
+ *
+ * Usage:
+ *   // Without LLM
+ *   const evaluator = new ArchitectureEvaluator(submission, challenge);
+ *   const result = await evaluator.evaluate();
+ *
+ *   // With LLM (Phase 3)
+ *   const evaluator = new ArchitectureEvaluator(
+ *     submission,
+ *     challenge,
+ *     true,  // useLLM
+ *     { apiKey: 'your-api-key', provider: 'anthropic' }  // or 'openai'
+ *   );
+ *   const result = await evaluator.evaluate();
+ */
 class ArchitectureEvaluator {
-  constructor(submission, challenge, useLLM = false) {
+  constructor(submission, challenge, useLLM = false, llmConfig = null) {
     this.submission = submission;
     this.challenge = challenge;
     this.feedback = [];
     this.errors = [];
     this.useLLM = useLLM;
+    this.llmConfig = llmConfig; // { apiKey, provider: 'anthropic' | 'openai' }
   }
 
   async evaluate() {
@@ -32,8 +60,17 @@ class ArchitectureEvaluator {
     // Phase 2: Rule-Based Validation (RECOMMENDED)
     const phase2 = this.evaluatePhase2();
 
-    // Calculate score with Phase 2 penalties
-    const score = this.calculateScoreWithPhases(phase1, phase2);
+    // Phase 3: LLM-Based Evaluation (OPTIONAL)
+    let phase3 = null;
+    if (this.useLLM && this.llmConfig) {
+      console.log('✓ Phase 3 enabled - starting LLM evaluation');
+      phase3 = await this.evaluatePhase3();
+    } else {
+      console.log('⊗ Phase 3 disabled - skipping LLM evaluation');
+    }
+
+    // Calculate score with all phases
+    const score = this.calculateScoreWithPhases(phase1, phase2, phase3);
 
     // Build feedback array
     const feedback = [];
@@ -46,6 +83,20 @@ class ArchitectureEvaluator {
       feedback.push('✓ All architectural best practices followed');
     }
 
+    // Add LLM feedback if available
+    if (phase3 && phase3.llmFeedback) {
+      const llm = phase3.llmFeedback;
+      if (llm.summary) {
+        feedback.push(`\n🤖 AI Analysis: ${llm.summary}`);
+      }
+      if (llm.strengths && llm.strengths.length > 0) {
+        feedback.push(`\n✅ Strengths: ${llm.strengths.join('; ')}`);
+      }
+      if (llm.issues && llm.issues.length > 0) {
+        feedback.push(`\n⚠️ Issues: ${llm.issues.join('; ')}`);
+      }
+    }
+
     feedback.push(`Efficiency score: ${score}/1000`);
 
     // Cost efficiency bonus feedback
@@ -54,7 +105,7 @@ class ArchitectureEvaluator {
       feedback.push("Excellent cost optimization!");
     }
 
-    return {
+    const result = {
       passed: true,
       cost: phase1.cost,
       complexity: phase1.complexity,
@@ -67,6 +118,12 @@ class ArchitectureEvaluator {
         phase2: phase2
       }
     };
+
+    if (phase3) {
+      result.phases.phase3 = phase3;
+    }
+
+    return result;
   }
 
   calculateCost(architecture, provider) {
@@ -77,14 +134,23 @@ class ArchitectureEvaluator {
     const hoursPerMonth = 730; // Average hours in a month
 
     architecture.nodes.forEach(node => {
+      // Extract service ID from node ID (format: aws-cloudfront-1768664069239 -> cloudfront)
+      const nodeId = node.id || '';
+      const parts = nodeId.split('-');
+      let serviceId = '';
+      if (parts.length >= 3) {
+        serviceId = parts.slice(1, -1).join('-');
+      }
+
       // Find the service in the cloud services data
       let service = null;
       for (const category in services) {
-        service = services[category].find(s => s.id === node.type);
+        service = services[category].find(s => s.id === serviceId);
         if (service) break;
       }
 
       if (service) {
+        console.log(`[Evaluator] Calculating cost for ${service.name}: base cost $${service.cost}`);
         // Calculate monthly cost based on service type
         if (service.category === 'compute') {
           totalCost += service.cost * hoursPerMonth;
@@ -157,8 +223,16 @@ class ArchitectureEvaluator {
 
     const usedCategories = new Set();
     architecture.nodes.forEach(node => {
+      // Extract service ID from node ID
+      const nodeId = node.id || '';
+      const parts = nodeId.split('-');
+      let serviceId = '';
+      if (parts.length >= 3) {
+        serviceId = parts.slice(1, -1).join('-');
+      }
+
       for (const category in services) {
-        const service = services[category].find(s => s.id === node.type);
+        const service = services[category].find(s => s.id === serviceId);
         if (service) {
           usedCategories.add(service.category);
         }
@@ -332,13 +406,34 @@ class ArchitectureEvaluator {
 
     const usedCategories = new Set();
     nodes.forEach(node => {
+      // Extract service ID from node ID (format: aws-cloudfront-1768664069239 -> cloudfront)
+      // Node ID format: [provider]-[service-id]-[timestamp]
+      const nodeId = node.id || '';
+      const parts = nodeId.split('-');
+
+      // Remove provider prefix and timestamp suffix
+      // For "aws-cloudfront-1768664069239", we want "cloudfront"
+      // For "aws-s3-standard-1768664074260", we want "s3-standard"
+      let serviceId = '';
+      if (parts.length >= 3) {
+        // Remove first part (provider) and last part (timestamp)
+        serviceId = parts.slice(1, -1).join('-');
+      }
+
+      console.log(`[Evaluator] Checking node ${node.id} -> extracted service ID: ${serviceId}`);
+
+      // Find matching service in cloudServices
       for (const category in services) {
-        const service = services[category].find(s => s.id === node.type);
+        const service = services[category].find(s => s.id === serviceId);
         if (service) {
+          console.log(`[Evaluator] ✓ Found service: ${service.name} (category: ${service.category})`);
           usedCategories.add(service.category);
         }
       }
     });
+
+    console.log(`[Evaluator] Used categories: ${Array.from(usedCategories).join(', ')}`);
+    console.log(`[Evaluator] Required categories: ${requiredServices.join(', ')}`);
 
     const missingServices = requiredServices.filter(required =>
       !usedCategories.has(required)
@@ -752,7 +847,57 @@ class ArchitectureEvaluator {
     return result;
   }
 
-  calculateScoreWithPhases(phase1Result, phase2Result) {
+  // Phase 3: LLM-Based Deep Evaluation
+  async evaluatePhase3() {
+    console.log('🤖 [Phase 3] Starting LLM-based evaluation...');
+
+    const result = {
+      phase: 3,
+      usedLLM: false,
+      llmFeedback: null,
+      timestamp: new Date()
+    };
+
+    try {
+      // Initialize LLM evaluator
+      console.log(`🤖 [Phase 3] Using LLM provider: ${this.llmConfig.provider || 'anthropic'}`);
+      const llmEvaluator = new LLMEvaluator(
+        this.llmConfig.apiKey,
+        this.llmConfig.provider || 'anthropic'
+      );
+
+      // Prepare architecture data for LLM
+      const architectureData = {
+        provider: this.submission.provider,
+        nodes: this.submission.architecture.nodes,
+        edges: this.submission.architecture.edges
+      };
+
+      // Call LLM evaluation
+      const evaluation = await llmEvaluator.evaluateArchitecture(
+        architectureData,
+        this.challenge
+      );
+
+      result.usedLLM = evaluation.usedLLM;
+      result.llmFeedback = evaluation.llmFeedback;
+      result.overallScore = evaluation.overallScore;
+      result.error = evaluation.error;
+
+      console.log(`🤖 [Phase 3] Evaluation complete. Used LLM: ${evaluation.usedLLM}`);
+      if (evaluation.llmFeedback) {
+        console.log(`🤖 [Phase 3] LLM Feedback Summary: ${evaluation.llmFeedback.summary}`);
+      }
+
+    } catch (error) {
+      console.error('❌ [Phase 3] LLM evaluation failed:', error);
+      result.error = error.message;
+    }
+
+    return result;
+  }
+
+  calculateScoreWithPhases(phase1Result, phase2Result, phase3Result = null) {
     const { cost } = phase1Result;
     const { warnings } = phase2Result;
     const nodes = this.submission.architecture.nodes;
@@ -773,9 +918,34 @@ class ArchitectureEvaluator {
       score += 50;
     }
 
-    // NEW: Phase 2 penalties
+    // Phase 2 penalties
     const warningPenalty = warnings.length * 25; // -25 points per warning
     score -= warningPenalty;
+
+    // Phase 3: LLM score integration (if available)
+    if (phase3Result && phase3Result.usedLLM && phase3Result.llmFeedback) {
+      const llm = phase3Result.llmFeedback;
+
+      // Calculate weighted LLM score (out of 200 points max)
+      // functionalityScore (40%), scalabilityScore (25%),
+      // costEfficiencyScore (20%), bestPracticesScore (15%)
+      const llmScore = (
+        (llm.functionalityScore || 0) * 0.40 +
+        (llm.scalabilityScore || 0) * 0.25 +
+        (llm.costEfficiencyScore || 0) * 0.20 +
+        (llm.bestPracticesScore || 0) * 0.15
+      ) * 20; // Scale to 200 points max (10 * 20 = 200)
+
+      // Apply LLM score bonus/penalty (adjust base score by +/- up to 200 points)
+      // A score of 7/10 should be neutral (0 adjustment)
+      const llmAdjustment = (llmScore / 10 - 7) * 20; // -140 to +60 range
+      score += llmAdjustment;
+
+      // Additional penalty if doesn't meet requirements
+      if (llm.meetsRequirements === false) {
+        score -= 100;
+      }
+    }
 
     // Ensure score is not negative
     score = Math.max(0, Math.round(score));
@@ -790,9 +960,17 @@ class ArchitectureEvaluator {
     const services = cloudServices[this.submission.provider];
     if (!services) return null;
 
+    // Extract service ID from node ID
+    const nodeId = node.id || '';
+    const parts = nodeId.split('-');
+    let serviceId = '';
+    if (parts.length >= 3) {
+      serviceId = parts.slice(1, -1).join('-');
+    }
+
     // Search all categories
     for (const category in services) {
-      const service = services[category].find(s => s.id === node.type);
+      const service = services[category].find(s => s.id === serviceId);
       if (service) return service;
     }
 
