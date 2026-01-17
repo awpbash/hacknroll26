@@ -64,6 +64,21 @@ export interface ChallengeConstraints {
 // Challenge Difficulty Type
 export type ChallengeDifficulty = 'Easy' | 'Medium' | 'Hard';
 
+// Challenge Solution Interface
+export interface ChallengeSolution {
+  id: string;
+  author: string;
+  title: string;
+  architecture: {
+    nodes: ArchitectureNode[];
+    edges: ArchitectureEdge[];
+  };
+  explanation: string;
+  totalCost: number;
+  upvotes: number;
+  provider: CloudProvider;
+}
+
 // Challenge Interface
 export interface Challenge {
   id: string;
@@ -80,6 +95,8 @@ export interface Challenge {
     services: string[];
     estimatedCost: number;
   };
+  editorial?: string;
+  solutions?: ChallengeSolution[];
 }
 
 // User Solution Interface
@@ -134,4 +151,54 @@ export interface CloudServicesData {
   [provider: string]: {
     [category: string]: CloudService[];
   };
+}
+
+// Coding Problem Types
+export interface Example {
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
+export interface TestCase {
+  input: string;
+  expectedOutput: string;
+  hidden?: boolean;
+}
+
+export interface ProblemDifficulty {
+  level: 'Easy' | 'Medium' | 'Hard';
+  color: string;
+}
+
+export interface CodingProblem {
+  id: string;
+  number: number;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  topics: string[];
+  companies: string[];
+  description: string;
+  examples: Example[];
+  constraints: string[];
+  hints?: string[];
+  starterCode: {
+    [language: string]: string;
+  };
+  testCases: TestCase[];
+  acceptanceRate?: number;
+  submissions?: number;
+  editorial?: string;
+  solutions?: ProblemSolution[];
+}
+
+export interface ProblemSolution {
+  id: string;
+  author: string;
+  language: string;
+  code: string;
+  explanation: string;
+  upvotes: number;
+  timeComplexity: string;
+  spaceComplexity: string;
 }
