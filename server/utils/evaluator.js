@@ -64,7 +64,7 @@ class ArchitectureEvaluator {
     let phase3 = null;
     if (this.useLLM && this.llmConfig) {
       console.log('✓ Phase 3 enabled - starting LLM evaluation');
-      phase3 = await this.evaluatePhase3();
+      phase3 = await this.evaluatePhase3(phase1);  // Pass phase1 results for calculated cost
     } else {
       console.log('⊗ Phase 3 disabled - skipping LLM evaluation');
     }
@@ -848,7 +848,7 @@ class ArchitectureEvaluator {
   }
 
   // Phase 3: LLM-Based Deep Evaluation
-  async evaluatePhase3() {
+  async evaluatePhase3(phase1Results) {
     console.log('🤖 [Phase 3] Starting LLM-based evaluation...');
 
     const result = {
@@ -866,11 +866,13 @@ class ArchitectureEvaluator {
         this.llmConfig.provider || 'anthropic'
       );
 
-      // Prepare architecture data for LLM
+      // Prepare architecture data for LLM with calculated costs
       const architectureData = {
         provider: this.submission.provider,
         nodes: this.submission.architecture.nodes,
-        edges: this.submission.architecture.edges
+        edges: this.submission.architecture.edges,
+        calculatedCost: phase1Results.cost,  // Use calculated monthly cost from Phase 1
+        calculatedComplexity: phase1Results.complexity
       };
 
       // Call LLM evaluation

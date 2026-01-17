@@ -35,17 +35,15 @@ class LLMEvaluator {
   }
 
   buildEvaluationPrompt(architecture, challenge) {
-  // Calculate actual cost from architecture
-  const totalCost = architecture.nodes.reduce((sum, node) => 
-    sum + (node.data.costPerMonth || 0), 0
-  );
+  // Use calculated monthly cost from Phase 1 (passed from evaluator)
+  const totalCost = architecture.calculatedCost || 0;
 
   // Extract service types used
   const servicesUsed = architecture.nodes.map(n => ({
-    name: n.data.label || n.data.name,
-    type: n.data.serviceType,
+    name: n.data.serviceName || n.data.customLabel || 'Unknown Service',  // Fixed: use serviceName
+    type: n.id.split('-').slice(1, -1).join('-'),  // Extract service ID from node ID (e.g., "aws-cloudfront-123" -> "cloudfront")
     category: n.data.category,
-    cost: n.data.costPerMonth
+    cost: n.data.cost || 0  // Base cost per unit (shown for reference)
   }));
 
   // Build connection map
@@ -53,10 +51,10 @@ class LLMEvaluator {
     const source = architecture.nodes.find(n => n.id === e.source);
     const target = architecture.nodes.find(n => n.id === e.target);
     return {
-      from: source?.data?.label || e.source,
-      to: target?.data?.label || e.target,
-      fromType: source?.data?.serviceType,
-      toType: target?.data?.serviceType
+      from: source?.data?.serviceName || source?.data?.customLabel || e.source,  // Fixed: use serviceName
+      to: target?.data?.serviceName || target?.data?.customLabel || e.target,    // Fixed: use serviceName
+      fromType: source?.id.split('-').slice(1, -1).join('-'),  // Extract service type from ID
+      toType: target?.id.split('-').slice(1, -1).join('-')     // Extract service type from ID
     };
   });
 

@@ -83,6 +83,7 @@ export interface SubmissionResponse {
       feedback: string[];
       errors: string[];
       status: string;
+      phase3Status?: 'pending' | 'completed' | 'failed' | 'disabled' | 'timeout';
       phases?: {
         phase1?: any;
         phase2?: any;
@@ -167,6 +168,8 @@ export const challengesAPI = {
 export const submissionsAPI = {
   submit: (submission: Submission): Promise<AxiosResponse<SubmissionResponse>> =>
     api.post('/submissions', submission),
+  getById: (submissionId: string): Promise<AxiosResponse<SubmissionResponse>> =>
+    api.get(`/submissions/${submissionId}`),
   getByChallenge: (challengeId: string): Promise<AxiosResponse<any[]>> =>
     api.get(`/submissions/challenge/${challengeId}`),
   getMySubmissions: (): Promise<AxiosResponse<any[]>> =>

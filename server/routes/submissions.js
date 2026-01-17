@@ -6,6 +6,50 @@ const User = require('../models/User');
 const ArchitectureEvaluator = require('../utils/evaluator');
 const { authenticateToken } = require('../middleware/auth');
 
+// Helper function to run Phase 3 evaluation asynchronously
+async function runPhase3Async(submissionId, submissionData, challenge, apiKey, provider) {
+  try {
+    console.log(`\n🤖 [Async Phase 3] Starting for submission ${submissionId}`);
+
+    // Create evaluator with LLM enabled for Phase 3
+    const evaluator = new ArchitectureEvaluator(
+      submissionData,
+      challenge,
+      true,  // useLLM - enable Phase 3
+      { apiKey, provider }  // llmConfig
+    );
+
+    // Run full evaluation (Phase 1, 2, 3)
+    const fullEvaluation = await evaluator.evaluate();
+    console.log(`\n✅ [Async Phase 3] Complete for submission ${submissionId}`);
+    console.log('📊 [Async Phase 3] Final score:', fullEvaluation.score);
+
+    // Update submission with Phase 3 results
+    await Submission.updateEvaluation(submissionId, {
+      ...fullEvaluation,
+      phase3Status: 'completed'
+    });
+
+    console.log(`✅ [Async Phase 3] Submission ${submissionId} updated with Phase 3 results`);
+  } catch (error) {
+    console.error(`❌ [Async Phase 3] Error for submission ${submissionId}:`, error.message);
+
+    // Update submission to mark Phase 3 as failed
+    try {
+      const submission = await Submission.findById(submissionId);
+      if (submission) {
+        await Submission.updateEvaluation(submissionId, {
+          ...submission.evaluation,
+          phase3Status: 'failed',
+          phase3Error: error.message
+        });
+      }
+    } catch (updateError) {
+      console.error('Failed to update submission with Phase 3 error:', updateError);
+    }
+  }
+}
+
 // Submit solution
 router.post('/', authenticateToken, async (req, res) => {
   try {
@@ -47,45 +91,47 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log(`   - Selected provider: ${llmProvider}`);
     console.log(`   - Has LLM Key: ${hasLLMKey}`);
 
-    // Create evaluator with LLM enabled (Phase 3) if API key exists
+    // Create evaluator (Phase 3 will run async)
     console.log(`\n📊 Creating evaluator with LLM ${hasLLMKey ? '✅ ENABLED' : '⊗ DISABLED'}`);
     const evaluator = new ArchitectureEvaluator(
       submissionData,
       challenge,
-      hasLLMKey,  // useLLM - enables Phase 3
-      hasLLMKey ? { apiKey, provider: llmProvider } : null  // llmConfig
+      false,  // useLLM - disable Phase 3 for now (run async later)
+      null  // llmConfig
     );
 
-    console.log('🔄 Starting evaluation...\n');
-    const evaluation = await evaluator.evaluate();
-    console.log('\n✅ Evaluation complete!');
-    console.log('📊 Results:', {
-      passed: evaluation.passed,
-      score: evaluation.score,
-      cost: evaluation.cost,
-      complexity: evaluation.complexity,
-      hasPhase3: !!evaluation.phases?.phase3
+    console.log('🔄 Starting Phase 1 & 2 evaluation (fast)...\n');
+    const initialEvaluation = await evaluator.evaluate();
+    console.log('\n✅ Phase 1 & 2 complete!');
+    console.log('📊 Initial Results:', {
+      passed: initialEvaluation.passed,
+      score: initialEvaluation.score,
+      cost: initialEvaluation.cost,
+      complexity: initialEvaluation.complexity
     });
 
-    // Create submission record
+    // Create submission record with initial evaluation
     console.log('💾 Creating submission record...');
     const submission = await Submission.create({
       userId: req.userId,
       challengeId,
       architecture,
       provider,
-      evaluation,
-      status: evaluation.status
+      evaluation: {
+        ...initialEvaluation,
+        phase3Status: hasLLMKey ? 'pending' : 'disabled'
+      },
+      status: initialEvaluation.status
     });
     console.log(`✅ Submission created with ID: ${submission.id}`);
 
     // Update challenge statistics
     console.log('📈 Updating challenge statistics...');
-    await Challenge.incrementSubmissions(challengeId, evaluation.passed);
+    await Challenge.incrementSubmissions(challengeId, initialEvaluation.passed);
 
-    // Update user record if accepted
-    if (evaluation.passed) {
-      console.log('🎉 Submission passed! Updating user record...');
+    // Update user record if accepted (based on Phase 1 & 2)
+    if (initialEvaluation.passed) {
+      console.log('🎉 Submission passed Phase 1 & 2! Updating user record...');
       const user = await User.findById(req.userId);
 
       // Check if user already solved this challenge
@@ -95,15 +141,15 @@ router.post('/', authenticateToken, async (req, res) => {
 
       if (existingSolution) {
         // Update if new solution is better
-        if (evaluation.score > existingSolution.complexity) {
+        if (initialEvaluation.score > existingSolution.complexity) {
           // Find and update the existing solution in the array
           const updatedSolutions = user.solvedChallenges.map(sc => {
             if (sc.challengeId === challengeId) {
               return {
                 challengeId,
                 architectureData: architecture,
-                cost: evaluation.cost,
-                complexity: evaluation.complexity,
+                cost: initialEvaluation.cost,
+                complexity: initialEvaluation.complexity,
                 timestamp: new Date()
               };
             }
@@ -123,11 +169,21 @@ router.post('/', authenticateToken, async (req, res) => {
         await User.addSolvedChallenge(req.userId, {
           challengeId,
           architectureData: architecture,
-          cost: evaluation.cost,
-          complexity: evaluation.complexity,
-          score: evaluation.score
+          cost: initialEvaluation.cost,
+          complexity: initialEvaluation.complexity,
+          score: initialEvaluation.score
         });
       }
+    }
+
+    // Start Phase 3 (LLM) evaluation in background if available
+    if (hasLLMKey && initialEvaluation.passed) {
+      console.log('🚀 Starting Phase 3 (LLM) evaluation in background...');
+
+      // Run Phase 3 asynchronously (don't await)
+      runPhase3Async(submission.id, submissionData, challenge, apiKey, llmProvider).catch(err => {
+        console.error('❌ Phase 3 async evaluation failed:', err);
+      });
     }
 
     console.log('📤 Sending response to client...\n');
@@ -147,6 +203,33 @@ router.post('/', authenticateToken, async (req, res) => {
     console.error('Error message:', error.message);
     console.error('Stack trace:', error.stack);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get single submission by ID (for polling Phase 3 status)
+router.get('/:submissionId', authenticateToken, async (req, res) => {
+  try {
+    const submission = await Submission.findById(req.params.submissionId);
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    // Verify user owns this submission
+    if (submission.userId !== req.userId) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    res.json({
+      submission: {
+        id: submission.id,
+        status: submission.status,
+        evaluation: submission.evaluation
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching submission:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

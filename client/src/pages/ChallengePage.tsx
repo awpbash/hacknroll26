@@ -580,6 +580,7 @@ interface EvaluationResult {
   llmFeedback: {
     summary: string;
   } | null;
+  phase3Status?: 'pending' | 'completed' | 'failed' | 'disabled' | 'timeout';
 }
 
 interface SubmissionResult {
@@ -720,6 +721,54 @@ const ChallengePage: React.FC = () => {
     }
   }, [id]);
 
+  // Poll for Phase 3 completion
+  const pollPhase3 = async (submissionId: string): Promise<void> => {
+    const maxAttempts = 60;
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        attempts++;
+        console.log(`🔄 Polling Phase 3... (attempt ${attempts}/${maxAttempts})`);
+
+        const response = await submissionsAPI.getById(submissionId);
+        const evaluation = response.data.submission.evaluation;
+
+        if (evaluation.phase3Status === 'completed') {
+          console.log('✅ Phase 3 completed!');
+          setResult(prev => prev ? {
+            ...prev,
+            status: evaluation.status || (evaluation.passed ? 'Accepted ✓' : 'Failed ✗'),
+            evaluation: {
+              ...prev.evaluation,
+              score: evaluation.score,
+              feedback: evaluation.feedback || [],
+              llmFeedback: evaluation.phases?.phase3?.llmFeedback || null,
+              phase3Status: 'completed'
+            }
+          } : null);
+          return;
+        }
+
+        if (evaluation.phase3Status === 'failed') {
+          console.log('❌ Phase 3 failed');
+          setResult(prev => prev ? { ...prev, evaluation: { ...prev.evaluation, phase3Status: 'failed' } } : null);
+          return;
+        }
+
+        if (attempts < maxAttempts && evaluation.phase3Status === 'pending') {
+          setTimeout(poll, 1000);
+        } else if (attempts >= maxAttempts) {
+          console.log('⏱️ Phase 3 polling timeout');
+          setResult(prev => prev ? { ...prev, evaluation: { ...prev.evaluation, phase3Status: 'timeout' } } : null);
+        }
+      } catch (error) {
+        console.error('Error polling Phase 3:', error);
+      }
+    };
+    poll();
+  };
+
   const handleSubmit = async (): Promise<void> => {
     if (!isAuthenticated) {
       alert('Please login to submit solutions');
@@ -745,7 +794,6 @@ const ChallengePage: React.FC = () => {
       console.log('Provider:', selectedProvider);
       console.log('Architecture:', architecture);
 
-      // Call the real backend API
       const response = await submissionsAPI.submit({
         challengeId: challenge.id,
         architecture: {
@@ -753,14 +801,14 @@ const ChallengePage: React.FC = () => {
           edges: architecture.edges
         },
         provider: selectedProvider,
-        totalCost: 0, // Backend will calculate this
-        services: [] // Backend will extract this
+        totalCost: 0,
+        services: []
       });
 
-      console.log('✅ Backend response:', response.data);
+      console.log('✅ Backend response (Phase 1 & 2):', response.data);
 
-      // Map backend response to frontend format
       const backendEval = response.data.submission.evaluation;
+      const submissionId = response.data.submission.id;
 
       setResult({
         status: backendEval.status || (backendEval.passed ? 'Accepted ✓' : 'Failed ✗'),
@@ -773,9 +821,15 @@ const ChallengePage: React.FC = () => {
           feedback: backendEval.feedback || [],
           errors: backendEval.errors || [],
           warnings: backendEval.phases?.phase2?.warnings?.map((w: any) => w.message) || [],
-          llmFeedback: backendEval.phases?.phase3?.llmFeedback || null
+          llmFeedback: backendEval.phases?.phase3?.llmFeedback || null,
+          phase3Status: backendEval.phase3Status || 'disabled'
         }
       });
+
+      if (backendEval.phase3Status === 'pending') {
+        console.log('🚀 Starting Phase 3 polling...');
+        pollPhase3(submissionId);
+      }
 
     } catch (error: any) {
       console.error('❌ Submission error:', error);
@@ -1026,9 +1080,34 @@ const ChallengePage: React.FC = () => {
             </FeedbackSection>
           )}
 
-          {result.evaluation.llmFeedback && (
+          {result.evaluation.phase3Status === 'pending' && (
             <FeedbackSection>
-              <ResultSectionTitle>AI Feedback</ResultSectionTitle>
+              <ResultSectionTitle>🤖 AI Analysis (Phase 3)</ResultSectionTitle>
+              <Description style={{
+                marginTop: '12px',
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontStyle: 'italic'
+              }}>
+                ⏳ Running deep AI evaluation... This may take a few seconds.
+              </Description>
+            </FeedbackSection>
+          )}
+
+          {result.evaluation.phase3Status === 'failed' && (
+            <FeedbackSection>
+              <ResultSectionTitle>🤖 AI Analysis (Phase 3)</ResultSectionTitle>
+              <Description style={{
+                marginTop: '12px',
+                color: 'rgba(239, 68, 68, 0.9)'
+              }}>
+                ❌ AI evaluation failed. Results based on Phase 1 & 2 only.
+              </Description>
+            </FeedbackSection>
+          )}
+
+          {result.evaluation.llmFeedback && result.evaluation.phase3Status === 'completed' && (
+            <FeedbackSection>
+              <ResultSectionTitle>🤖 AI Analysis (Phase 3)</ResultSectionTitle>
               <Description style={{ marginTop: '12px', color: 'rgba(255, 255, 255, 0.95)' }}>
                 {result.evaluation.llmFeedback.summary}
               </Description>

@@ -29,14 +29,26 @@ export async function fetchCloudServices(): Promise<CloudServicesData> {
   }
 
   try {
-    const response = await api.get<CloudServicesData>('/services');
+    const response = await api.get<any>('/services');
+
+    // Transform backend data: map baseCost -> cost for frontend compatibility
+    const transformedData: CloudServicesData = {};
+    Object.keys(response.data).forEach(provider => {
+      transformedData[provider] = {};
+      Object.keys(response.data[provider]).forEach(category => {
+        transformedData[provider][category] = response.data[provider][category].map((service: any) => ({
+          ...service,
+          cost: service.baseCost !== undefined ? service.baseCost : service.cost || 0
+        }));
+      });
+    });
 
     // Update cache
-    cachedServices = response.data;
+    cachedServices = transformedData;
     cacheTimestamp = now;
 
-    console.log('✅ Cloud services fetched from API');
-    return response.data;
+    console.log('✅ Cloud services fetched from API and transformed');
+    return transformedData;
   } catch (error) {
     console.warn('⚠️ Failed to fetch from API, using fallback data:', error);
 
@@ -54,7 +66,17 @@ export async function fetchCloudServices(): Promise<CloudServicesData> {
 export async function fetchProviderServices(provider: string): Promise<any> {
   try {
     const response = await api.get(`/services/${provider}`);
-    return response.data;
+
+    // Transform backend data: map baseCost -> cost for frontend compatibility
+    const transformedData: any = {};
+    Object.keys(response.data).forEach(category => {
+      transformedData[category] = response.data[category].map((service: any) => ({
+        ...service,
+        cost: service.baseCost !== undefined ? service.baseCost : service.cost || 0
+      }));
+    });
+
+    return transformedData;
   } catch (error) {
     console.warn(`Failed to fetch ${provider} services:`, error);
     // Fallback to cached or hardcoded data
