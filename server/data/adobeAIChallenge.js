@@ -5,13 +5,9 @@ const adobeAIChallenge = {
   title: "Adobe AI Platform Architecture",
   difficulty: "Hard",
   category: "Full-Stack",
-  description: `
-    <p>Adobe plans to launch a new AI-integrated platform that brings generative AI (image, video, and design assistance) directly into Creative Cloud applications such as Photoshop, Illustrator, and Premiere Pro.</p>
-
-    <p>The platform must support interactive AI generation, enterprise-grade security, and global availability, while maintaining predictable costs and high reliability.</p>
-
-    <p><strong>Your task:</strong> Design the cloud architecture for this new AI platform.</p>
-  `,
+  description: "Adobe plans to launch a new AI-integrated platform that brings generative AI (image, video, and design assistance) directly into Creative Cloud applications such as Photoshop, Illustrator, and Premiere Pro. The platform must support interactive AI generation, enterprise-grade security, and global availability, while maintaining predictable costs and high reliability. Your task: Design the cloud architecture for this new AI platform.",
+  companyLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Adobe_Corporate_logo.svg/200px-Adobe_Corporate_logo.svg.png",
+  companyName: "Adobe",
   requirements: [
     "Support real-time AI generation (e.g., image fill, text-to-design) with p95 latency < 5 seconds",
     "Support asynchronous AI jobs (e.g., video generation, batch rendering) with reliable queue processing",
@@ -88,6 +84,7 @@ const adobeAIChallenge = {
       id: 'sol-adobe-1',
       author: 'CloudArchitect_Pro',
       title: 'Enterprise Multi-Region AI Platform',
+      videoUrl: 'https://youtu.be/U1Mu8Eov2Ko?si=lPKhNFl1rQpZFsaq',
       architecture: {
         nodes: [
           // Control Plane
