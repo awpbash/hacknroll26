@@ -29,6 +29,12 @@ const Header = styled.div`
   flex-shrink: 0;
 `;
 
+const CompanyLogo = styled.img`
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+`;
+
 const Title = styled.h1`
   font-size: 20px;
   margin: 0;
@@ -568,6 +574,20 @@ const UpvoteButton = styled.button`
   }
 `;
 
+const VideoContainer = styled.div`
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: #000;
+`;
+
+const VideoEmbed = styled.iframe`
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+`;
+
 interface EvaluationResult {
   passed: boolean;
   score: number;
@@ -612,6 +632,22 @@ const EditorialPanel: React.FC<EditorialPanelProps> = ({ challenge }) => {
   );
 };
 
+// Helper function to extract YouTube video ID from URL
+const getYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/,
+    /youtube\.com\/watch\?.*v=([^&\s]+)/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+};
+
 // Solutions Panel Component
 interface SolutionsPanelProps {
   challenge: Challenge;
@@ -633,36 +669,51 @@ const SolutionsPanel: React.FC<SolutionsPanelProps> = ({ challenge }) => {
 
   return (
     <>
-      {challenge.solutions.map((solution) => (
-        <SolutionCard key={solution.id}>
-          <SolutionHeader>
-            <div>
-              <SolutionTitle>{solution.title}</SolutionTitle>
-              <SolutionMeta>
-                <span>by {solution.author}</span>
-                <span>•</span>
-                <span>{solution.provider}</span>
-              </SolutionMeta>
-            </div>
-            <UpvoteButton>
-              ▲ {solution.upvotes}
-            </UpvoteButton>
-          </SolutionHeader>
+      {challenge.solutions.map((solution) => {
+        const videoId = solution.videoUrl ? getYouTubeVideoId(solution.videoUrl) : null;
 
-          <SolutionStats>
-            <SolutionStat>
-              Cost: <span>${solution.totalCost}/mo</span>
-            </SolutionStat>
-            <SolutionStat>
-              Services: <span>{solution.architecture.nodes.length}</span>
-            </SolutionStat>
-          </SolutionStats>
+        return (
+          <SolutionCard key={solution.id}>
+            <SolutionHeader>
+              <div>
+                <SolutionTitle>{solution.title}</SolutionTitle>
+                <SolutionMeta>
+                  <span>by {solution.author}</span>
+                  <span>•</span>
+                  <span>{solution.provider}</span>
+                </SolutionMeta>
+              </div>
+              <UpvoteButton>
+                ▲ {solution.upvotes}
+              </UpvoteButton>
+            </SolutionHeader>
 
-          <Section style={{ marginTop: '16px' }}>
-            <MarkdownContent dangerouslySetInnerHTML={{ __html: solution.explanation }} />
-          </Section>
-        </SolutionCard>
-      ))}
+            <SolutionStats>
+              <SolutionStat>
+                Cost: <span>${solution.totalCost}/mo</span>
+              </SolutionStat>
+              <SolutionStat>
+                Services: <span>{solution.architecture.nodes.length}</span>
+              </SolutionStat>
+            </SolutionStats>
+
+            {videoId && (
+              <VideoContainer>
+                <VideoEmbed
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title={solution.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </VideoContainer>
+            )}
+
+            <Section style={{ marginTop: '16px' }}>
+              <MarkdownContent dangerouslySetInnerHTML={{ __html: solution.explanation }} />
+            </Section>
+          </SolutionCard>
+        );
+      })}
     </>
   );
 };
@@ -873,6 +924,9 @@ const ChallengePage: React.FC = () => {
   return (
     <PageContainer>
       <Header>
+        {challenge.companyLogo && (
+          <CompanyLogo src={challenge.companyLogo} alt={`${challenge.companyName || 'Company'} logo`} />
+        )}
         <Title>{challenge.title}</Title>
         <BadgeContainer>
           <DifficultyBadge difficulty={challenge.difficulty}>

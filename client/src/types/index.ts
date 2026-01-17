@@ -77,6 +77,7 @@ export interface ChallengeSolution {
   totalCost: number;
   upvotes: number;
   provider: CloudProvider;
+  videoUrl?: string;
 }
 
 // Challenge Interface
@@ -88,6 +89,8 @@ export interface Challenge {
   requirements: string[];
   constraints: ChallengeConstraints;
   category: string;
+  companyLogo?: string;
+  companyName?: string;
   acceptanceRate?: number;
   submissions?: number;
   existingInfrastructure?: ExistingInfrastructure;
