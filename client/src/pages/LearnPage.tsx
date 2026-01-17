@@ -5,6 +5,7 @@ import { providerLogos } from '../data/providerLogos';
 import { CloudProvider, CloudService, CloudServicesData, ServiceCategory } from '../types';
 import ServiceDetailsModal from '../components/ServiceDetailsModal';
 import { formatPrice } from '../utils/formatting';
+import BasicsModePage from './BasicsModePage';
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -31,6 +32,39 @@ const Subtitle = styled.p`
   font-size: 18px;
   color: var(--text-secondary);
   margin: 0;
+`;
+
+const ModeToggle = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+`;
+
+interface ModeButtonProps {
+  active?: boolean;
+}
+
+const ModeButton = styled.button<ModeButtonProps>`
+  padding: 14px 32px;
+  background: ${props => props.active ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-secondary)'};
+  color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
+  border: 2px solid ${props => props.active ? 'transparent' : 'var(--border-color)'};
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: ${props => props.active ? 'var(--glow-primary)' : 'var(--shadow-sm)'};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+  }
 `;
 
 const ProviderTabs = styled.div`
@@ -268,6 +302,7 @@ interface CategoryNames {
 }
 
 const LearnPage: React.FC = () => {
+  const [mode, setMode] = useState<'services' | 'basics'>('services');
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | 'All'>('AWS');
   const [selectedCategory, setSelectedCategory] = useState<string>('compute');
   const [cloudServices, setCloudServices] = useState<CloudServicesData | null>(null);
@@ -318,6 +353,32 @@ const LearnPage: React.FC = () => {
     loadCloudServices();
   }, []);
 
+  // If in basics mode, render the basics page directly
+  if (mode === 'basics') {
+    return (
+      <>
+        <PageContainer>
+          <Header>
+            <Title>Learn Cloud Computing</Title>
+            <Subtitle>
+              Master cloud computing from beginner to advanced
+            </Subtitle>
+          </Header>
+
+          <ModeToggle>
+            <ModeButton active={false} onClick={() => setMode('services')}>
+              🌐 Browse Services
+            </ModeButton>
+            <ModeButton active={true} onClick={() => setMode('basics')}>
+              🍼 Learn Basics
+            </ModeButton>
+          </ModeToggle>
+        </PageContainer>
+        <BasicsModePage />
+      </>
+    );
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -328,6 +389,16 @@ const LearnPage: React.FC = () => {
             Explore and understand cloud services from major providers
           </Subtitle>
         </Header>
+
+        <ModeToggle>
+          <ModeButton active={true} onClick={() => setMode('services')}>
+            🌐 Browse Services
+          </ModeButton>
+          <ModeButton active={false} onClick={() => setMode('basics')}>
+            🍼 Learn Basics
+          </ModeButton>
+        </ModeToggle>
+
         <LoadingContainer>
           <LoadingSpinner />
           <LoadingText>Loading cloud services...</LoadingText>
@@ -346,6 +417,16 @@ const LearnPage: React.FC = () => {
             Explore and understand cloud services from major providers
           </Subtitle>
         </Header>
+
+        <ModeToggle>
+          <ModeButton active={true} onClick={() => setMode('services')}>
+            🌐 Browse Services
+          </ModeButton>
+          <ModeButton active={false} onClick={() => setMode('basics')}>
+            🍼 Learn Basics
+          </ModeButton>
+        </ModeToggle>
+
         <ErrorContainer>
           <ErrorTitle>⚠️ Error Loading Services</ErrorTitle>
           <ErrorText>{error || 'Unable to load cloud services data.'}</ErrorText>
@@ -395,6 +476,15 @@ const LearnPage: React.FC = () => {
           Explore and understand cloud services from major providers
         </Subtitle>
       </Header>
+
+      <ModeToggle>
+        <ModeButton active={true} onClick={() => setMode('services')}>
+          🌐 Browse Services
+        </ModeButton>
+        <ModeButton active={false} onClick={() => setMode('basics')}>
+          🍼 Learn Basics
+        </ModeButton>
+      </ModeToggle>
 
       <ProviderTabs>
         {providers.map((provider: CloudProvider | 'All') => (
