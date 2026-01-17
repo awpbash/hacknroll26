@@ -16,6 +16,7 @@ const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 `;
 
 const Header = styled.div`
@@ -283,12 +284,21 @@ interface ResultPanelProps {
 }
 
 const ResultPanel = styled.div<ResultPanelProps>`
-  margin-top: 24px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 900px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
   padding: 28px;
   border-radius: 12px;
-  background: ${props => props.passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'};
+  background: ${props => props.passed ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)'};
   border: 2px solid ${props => props.passed ? 'var(--accent-success)' : 'var(--accent-error)'};
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 0 9999px rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  backdrop-filter: blur(4px);
 `;
 
 interface ResultTitleProps {
@@ -297,7 +307,7 @@ interface ResultTitleProps {
 
 const ResultTitle = styled.h3<ResultTitleProps>`
   margin: 0 0 20px 0;
-  color: ${props => props.passed ? 'var(--accent-success)' : 'var(--accent-error)'};
+  color: white;
   font-size: 24px;
   font-weight: 700;
   display: flex;
@@ -310,6 +320,31 @@ const ResultTitle = styled.h3<ResultTitleProps>`
   }
 `;
 
+const CloseButton = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: white;
+    transform: scale(1.1);
+  }
+`;
+
 const ResultStats = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -318,14 +353,14 @@ const ResultStats = styled.div`
 `;
 
 const StatBox = styled.div`
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.15);
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 `;
 
 const StatLabel = styled.div`
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 13px;
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -333,7 +368,7 @@ const StatLabel = styled.div`
 `;
 
 const StatValue = styled.div`
-  color: var(--text-primary);
+  color: white;
   font-size: 24px;
   font-weight: 700;
 `;
@@ -342,13 +377,23 @@ const FeedbackSection = styled.div`
   margin-top: 20px;
 `;
 
+const ResultSectionTitle = styled.h4`
+  font-size: 14px;
+  margin: 0 0 10px 0;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
+`;
+
 interface FeedbackItemProps {
   passed?: boolean;
 }
 
 const FeedbackItem = styled.div<FeedbackItemProps>`
   padding: 12px 0;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.6;
   display: flex;
   align-items: start;
@@ -356,7 +401,7 @@ const FeedbackItem = styled.div<FeedbackItemProps>`
 
   &::before {
     content: "•";
-    color: ${props => props.passed ? 'var(--accent-success)' : 'var(--accent-error)'};
+    color: white;
     font-size: 20px;
     font-weight: bold;
   }
@@ -922,6 +967,9 @@ const ChallengePage: React.FC = () => {
 
       {result && (
         <ResultPanel passed={result.evaluation.passed}>
+          <CloseButton onClick={() => setResult(null)} title="Close results">
+            ×
+          </CloseButton>
           <ResultTitle passed={result.evaluation.passed}>
             {result.status}
           </ResultTitle>
@@ -947,7 +995,7 @@ const ChallengePage: React.FC = () => {
 
           {result.evaluation.feedback.length > 0 && (
             <FeedbackSection>
-              <SectionTitle>Feedback</SectionTitle>
+              <ResultSectionTitle>Feedback</ResultSectionTitle>
               {result.evaluation.feedback.map((fb: string, index: number) => (
                 <FeedbackItem key={index} passed={true}>
                   {fb}
@@ -958,7 +1006,7 @@ const ChallengePage: React.FC = () => {
 
           {result.evaluation.errors.length > 0 && (
             <FeedbackSection>
-              <SectionTitle>Issues</SectionTitle>
+              <ResultSectionTitle>Issues</ResultSectionTitle>
               {result.evaluation.errors.map((error: string, index: number) => (
                 <FeedbackItem key={index} passed={false}>
                   {error}
@@ -969,9 +1017,9 @@ const ChallengePage: React.FC = () => {
 
           {result.evaluation.warnings && result.evaluation.warnings.length > 0 && (
             <FeedbackSection>
-              <SectionTitle>Suggestions</SectionTitle>
+              <ResultSectionTitle>Suggestions</ResultSectionTitle>
               {result.evaluation.warnings.map((warning: string, index: number) => (
-                <FeedbackItem key={index} passed={true} style={{ color: 'var(--accent-warning)' }}>
+                <FeedbackItem key={index} passed={true} style={{ color: 'rgba(255, 255, 255, 0.95)' }}>
                   {warning}
                 </FeedbackItem>
               ))}
@@ -980,8 +1028,8 @@ const ChallengePage: React.FC = () => {
 
           {result.evaluation.llmFeedback && (
             <FeedbackSection>
-              <SectionTitle>AI Feedback</SectionTitle>
-              <Description style={{ marginTop: '12px' }}>
+              <ResultSectionTitle>AI Feedback</ResultSectionTitle>
+              <Description style={{ marginTop: '12px', color: 'rgba(255, 255, 255, 0.95)' }}>
                 {result.evaluation.llmFeedback.summary}
               </Description>
             </FeedbackSection>

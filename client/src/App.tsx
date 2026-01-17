@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HeroUIProvider } from '@heroui/react';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -13,21 +15,25 @@ import GlobalStyles from './styles/GlobalStyles';
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <AuthProvider>
-        <GlobalStyles />
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/challenges" element={<ChallengesListPage />} />
-          <Route path="/challenge/:id" element={<ChallengePage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/learn" element={<LearnPage />} />
-        </Routes>
-      </AuthProvider>
-    </Router>
+    <ThemeProvider>
+      <HeroUIProvider>
+        <Router>
+          <AuthProvider>
+            <GlobalStyles />
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/challenges" element={<ChallengesListPage />} />
+              <Route path="/challenge/:id" element={<ChallengePage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/learn" element={<LearnPage />} />
+            </Routes>
+          </AuthProvider>
+        </Router>
+      </HeroUIProvider>
+    </ThemeProvider>
   );
 };
 
