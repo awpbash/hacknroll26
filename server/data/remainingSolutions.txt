@@ -1,0 +1,105 @@
+SOLUTIONS TO ADD TO sampleChallenges.js
+
+Due to file size, I'll create comprehensive solutions here and then integrate them into the main file.
+
+==== Challenge 4: Real-time Data Processing Pipeline ====
+
+This needs solutions for:
+- Streaming data ingestion
+- Real-time processing
+- Data storage (raw + processed)
+- Analytics capability
+
+Solution 1: AWS Kinesis + Lambda + S3 + DynamoDB
+- Kinesis Data Streams for ingestion
+- Lambda for processing
+- S3 for raw data lake
+- DynamoDB for queryable processed data
+- Cost: ~$120/month
+
+Solution 2: AWS SQS + Lambda + S3 + Athena
+- SQS for message queue
+- Lambda for processing
+- S3 for both raw and processed
+- Athena for SQL analytics
+- Cost: ~$95/month
+
+==== Challenge 5: Multi-Region Disaster Recovery ====
+
+Solution 1: Route53 + Multi-Region ELB + Aurora Global
+- Route53 with health checks and failover
+- ELB in two regions
+- Aurora Global Database for cross-region replication
+- EC2 in both regions
+- Cost: ~$425/month
+
+==== Challenge 6: AI Chatbot Deployment ====
+
+Solution 1: API Gateway + Lambda + Llama 2 7B + DynamoDB
+- API Gateway for REST endpoints
+- Lambda for orchestration
+- Llama 2 7B (cost-effective LLM)
+- DynamoDB for conversation history
+- Cost: ~$75/month
+
+Solution 2: Lambda + RunPod LLaMA 70B + ElastiCache
+- For higher quality responses
+- Uses RunPod GPU inference
+- ElastiCache for conversation caching
+- Cost: ~$145/month
+
+==== Challenge 7: Add Search to E-commerce ====
+
+Solution 1: OpenSearch + Lambda
+- OpenSearch cluster for full-text search
+- Lambda to sync DynamoDB to OpenSearch
+- DynamoDB Streams trigger for real-time updates
+- Cost: ~$55/month
+
+Solution 2: Algolia (managed search service)
+- External managed service
+- Lambda for data sync
+- Cost: ~$85/month
+
+==== Challenge 8: Add Caching to Slow API ====
+
+Solution 1: ElastiCache Redis
+- Simply add Redis cache layer
+- Lambda reads from cache first
+- Cache aside pattern
+- Cost: ~$25/month
+
+Solution 2: DynamoDB DAX (DynamoDB Accelerator)
+- If using DynamoDB instead of RDS
+- In-memory cache
+- Cost: ~$35/month
+
+==== Challenge 9: Video Platform Analytics ====
+
+Solution 1: Kinesis + Lambda + DynamoDB + S3
+- Kinesis for event streaming
+- Lambda for processing
+- DynamoDB for real-time queries
+- S3 for cold storage
+- Cost: ~$115/month
+
+Solution 2: SQS + Lambda + Timestream + S3
+- SQS for event buffering
+- Lambda for processing
+- Timestream for time-series data
+- S3 for archival
+- Cost: ~$145/month
+
+==== Challenge 10: AI Image Recognition ====
+
+Solution 1: Lambda + Rekognition
+- S3 event trigger on upload
+- Lambda processes with Rekognition
+- Updates DynamoDB with tags
+- Cost: ~$55/month
+
+Solution 2: Lambda + Azure Computer Vision
+- Cross-cloud solution
+- Azure Computer Vision API
+- More detailed object detection
+- Cost: ~$68/month
