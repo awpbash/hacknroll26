@@ -31,7 +31,11 @@ const TabBar = styled.div`
   border-bottom: 2px solid var(--border-color);
 `;
 
-const Tab = styled.button`
+interface TabProps {
+  active?: boolean;
+}
+
+const Tab = styled.button<TabProps>`
   padding: 14px 28px;
   border: none;
   background: none;
@@ -86,7 +90,11 @@ const HeaderRow = styled(LeaderboardRow)`
   }
 `;
 
-const RankCell = styled.div`
+interface RankCellProps {
+  rank: number;
+}
+
+const RankCell = styled.div<RankCellProps>`
   font-weight: 700;
   font-size: ${props => props.rank <= 3 ? '32px' : '20px'};
   color: ${props => {
@@ -117,17 +125,26 @@ const StatCell = styled.div`
   text-align: right;
 `;
 
-const LeaderboardPage = () => {
-  const [activeTab, setActiveTab] = useState('global');
+interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  totalScore?: number;
+  solvedCount?: number;
+  cost?: number;
+  score?: number;
+}
 
-  const getRankDisplay = (rank) => {
+const LeaderboardPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'global' | 'cost-efficient'>('global');
+
+  const getRankDisplay = (rank: number): string | number => {
     if (rank === 1) return '🥇';
     if (rank === 2) return '🥈';
     if (rank === 3) return '🥉';
     return rank;
   };
 
-  const leaderboard = activeTab === 'global' ? mockLeaderboard : mockCostLeaderboard;
+  const leaderboard: LeaderboardEntry[] = activeTab === 'global' ? mockLeaderboard : mockCostLeaderboard;
 
   return (
     <PageContainer>
@@ -167,18 +184,18 @@ const LeaderboardPage = () => {
           )}
         </HeaderRow>
 
-        {leaderboard.map((entry) => (
+        {leaderboard.map((entry: LeaderboardEntry) => (
           <LeaderboardRow key={entry.rank}>
             <RankCell rank={entry.rank}>{getRankDisplay(entry.rank)}</RankCell>
             <UsernameCell>{entry.username}</UsernameCell>
             {activeTab === 'global' ? (
               <>
-                <ScoreCell>{entry.totalScore.toLocaleString()}</ScoreCell>
+                <ScoreCell>{entry.totalScore?.toLocaleString()}</ScoreCell>
                 <StatCell>{entry.solvedCount} challenges</StatCell>
               </>
             ) : (
               <>
-                <StatCell>${entry.cost.toFixed(2)}</StatCell>
+                <StatCell>${entry.cost?.toFixed(2)}</StatCell>
                 <ScoreCell>{entry.score}</ScoreCell>
               </>
             )}

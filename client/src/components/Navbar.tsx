@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 
+interface ButtonProps {
+  primary?: boolean;
+}
+
 const Nav = styled.nav`
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -92,7 +96,7 @@ const Username = styled.span`
   border: 1px solid var(--border-color);
 `;
 
-const Button = styled.button`
+const Button = styled.button<ButtonProps>`
   padding: 10px 20px;
   background: ${props => props.primary ?
     'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' :
@@ -103,6 +107,8 @@ const Button = styled.button`
   font-weight: 600;
   font-size: 14px;
   box-shadow: ${props => props.primary ? 'var(--glow-primary)' : 'var(--shadow-sm)'};
+  cursor: pointer;
+  transition: all 0.2s;
 
   &:hover {
     transform: translateY(-2px);
@@ -113,11 +119,24 @@ const Button = styled.button`
   }
 `;
 
-const Navbar = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+// Auth Context Type (inferred from usage)
+interface AuthContextType {
+  user: {
+    id: string | number;
+    username: string;
+    email: string;
+    totalScore?: number;
+    solvedCount?: number;
+  } | null;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+const Navbar: React.FC = () => {
+  const { user, logout, isAuthenticated } = useAuth() as AuthContextType;
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     logout();
     navigate('/');
   };

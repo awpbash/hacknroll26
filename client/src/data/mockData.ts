@@ -1,6 +1,8 @@
 // Mock data for demo - no backend needed!
 
-export const mockChallenges = [
+import type { Challenge } from '../types';
+
+export const mockChallenges: Challenge[] = [
   {
     id: '1',
     title: "Simple Static Website Hosting",
@@ -60,7 +62,7 @@ export const mockChallenges = [
       optionalServices: ["cache"]
     },
     category: "Full-Stack",
-    acceptanceRate: 45.2,
+    acceptanceRate: 71.5,
     submissions: 156
   },
   {
@@ -82,8 +84,8 @@ export const mockChallenges = [
       optionalServices: []
     },
     category: "Full-Stack",
-    acceptanceRate: 28.5,
-    submissions: 92
+    acceptanceRate: 45.2,
+    submissions: 89
   },
   {
     id: '5',
@@ -103,8 +105,8 @@ export const mockChallenges = [
       optionalServices: []
     },
     category: "Full-Stack",
-    acceptanceRate: 15.7,
-    submissions: 51
+    acceptanceRate: 58.9,
+    submissions: 134
   },
   {
     id: '6',
@@ -125,8 +127,8 @@ export const mockChallenges = [
       optionalServices: ["compute", "storage", "networking"]
     },
     category: "Serverless",
-    acceptanceRate: 38.4,
-    submissions: 125
+    acceptanceRate: 38.7,
+    submissions: 67
   },
   {
     id: '7',
@@ -147,8 +149,6 @@ export const mockChallenges = [
       optionalServices: ["serverless", "compute", "cache"]
     },
     category: "Database",
-    acceptanceRate: 52.3,
-    submissions: 143,
     existingInfrastructure: {
       nodes: [
         {
@@ -161,7 +161,6 @@ export const mockChallenges = [
             category: 'storage',
             cost: 15,
             specs: '500GB storage',
-            description: 'Stores product images',
             inputSpec: 'Image uploads',
             outputSpec: 'Image URLs',
             isExisting: true
@@ -177,7 +176,6 @@ export const mockChallenges = [
             category: 'database',
             cost: 50,
             specs: '25 RCU, 25 WCU',
-            description: 'Product database',
             inputSpec: 'Product CRUD operations',
             outputSpec: 'Product data',
             isExisting: true
@@ -189,8 +187,7 @@ export const mockChallenges = [
           id: 'e-s3-dynamodb',
           source: 'existing-s3',
           target: 'existing-dynamodb',
-          animated: true,
-          style: { stroke: 'rgba(255, 255, 255, 0.5)', strokeWidth: 2 }
+          animated: true
         }
       ]
     }
@@ -214,8 +211,6 @@ export const mockChallenges = [
       optionalServices: ["serverless"]
     },
     category: "Serverless",
-    acceptanceRate: 71.2,
-    submissions: 198,
     existingInfrastructure: {
       nodes: [
         {
@@ -228,7 +223,6 @@ export const mockChallenges = [
             category: 'serverless',
             cost: 8,
             specs: '512MB, Node.js',
-            description: 'API Gateway handler',
             inputSpec: 'HTTP requests',
             outputSpec: 'JSON responses',
             isExisting: true
@@ -244,7 +238,6 @@ export const mockChallenges = [
             category: 'database',
             cost: 45,
             specs: 'db.t3.medium',
-            description: 'Relational database',
             inputSpec: 'SQL queries',
             outputSpec: 'Query results',
             isExisting: true
@@ -256,8 +249,7 @@ export const mockChallenges = [
           id: 'e-lambda-rds',
           source: 'existing-lambda',
           target: 'existing-rds',
-          animated: true,
-          style: { stroke: 'rgba(255, 255, 255, 0.5)', strokeWidth: 2 }
+          animated: true
         }
       ]
     }
@@ -281,8 +273,6 @@ export const mockChallenges = [
       optionalServices: ["storage", "compute"]
     },
     category: "Full-Stack",
-    acceptanceRate: 33.8,
-    submissions: 89,
     existingInfrastructure: {
       nodes: [
         {
@@ -295,7 +285,6 @@ export const mockChallenges = [
             category: 'storage',
             cost: 120,
             specs: '5TB storage',
-            description: 'Video file storage',
             inputSpec: 'Video uploads',
             outputSpec: 'Video files',
             isExisting: true
@@ -311,7 +300,6 @@ export const mockChallenges = [
             category: 'networking',
             cost: 85,
             specs: '10TB bandwidth',
-            description: 'Content delivery network',
             inputSpec: 'Video requests',
             outputSpec: 'Video streams',
             isExisting: true
@@ -323,8 +311,7 @@ export const mockChallenges = [
           id: 'e-s3-cloudfront',
           source: 'existing-s3-videos',
           target: 'existing-cloudfront',
-          animated: true,
-          style: { stroke: 'rgba(255, 255, 255, 0.5)', strokeWidth: 2 }
+          animated: true
         }
       ]
     }
@@ -348,8 +335,6 @@ export const mockChallenges = [
       optionalServices: ["serverless", "messaging", "compute"]
     },
     category: "Compute",
-    acceptanceRate: 44.7,
-    submissions: 167,
     existingInfrastructure: {
       nodes: [
         {
@@ -362,7 +347,6 @@ export const mockChallenges = [
             category: 'storage',
             cost: 35,
             specs: '1TB storage',
-            description: 'User photo storage',
             inputSpec: 'Photo uploads',
             outputSpec: 'Photo URLs',
             isExisting: true
@@ -378,7 +362,6 @@ export const mockChallenges = [
             category: 'database',
             cost: 30,
             specs: '10 RCU, 10 WCU',
-            description: 'Photo metadata database',
             inputSpec: 'Metadata writes',
             outputSpec: 'Photo metadata',
             isExisting: true
@@ -390,15 +373,29 @@ export const mockChallenges = [
           id: 'e-s3-dynamodb-photos',
           source: 'existing-s3-photos',
           target: 'existing-dynamodb-photos',
-          animated: true,
-          style: { stroke: 'rgba(255, 255, 255, 0.5)', strokeWidth: 2 }
+          animated: true
         }
       ]
     }
   }
 ];
 
-export const mockLeaderboard = [
+export interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  totalScore: number;
+  solvedCount: number;
+}
+
+export interface CostLeaderboardEntry {
+  rank: number;
+  username: string;
+  challenge: string;
+  cost: number;
+  score: number;
+}
+
+export const mockLeaderboard: LeaderboardEntry[] = [
   { rank: 1, username: "cloudmaster", totalScore: 4250, solvedCount: 5 },
   { rank: 2, username: "architech_pro", totalScore: 3890, solvedCount: 5 },
   { rank: 3, username: "aws_ninja", totalScore: 3620, solvedCount: 4 },
@@ -411,7 +408,7 @@ export const mockLeaderboard = [
   { rank: 10, username: "tech_enthusiast", totalScore: 1720, solvedCount: 2 }
 ];
 
-export const mockCostLeaderboard = [
+export const mockCostLeaderboard: CostLeaderboardEntry[] = [
   { rank: 1, username: "frugal_architect", challenge: "Simple Static Website Hosting", cost: 5.23, score: 950 },
   { rank: 2, username: "cost_optimizer", challenge: "Serverless REST API", cost: 3.15, score: 920 },
   { rank: 3, username: "penny_pincher", challenge: "Simple Static Website Hosting", cost: 6.78, score: 890 },
@@ -419,27 +416,44 @@ export const mockCostLeaderboard = [
   { rank: 5, username: "smart_designer", challenge: "Serverless REST API", cost: 4.92, score: 820 }
 ];
 
+export interface MockUser {
+  id: string;
+  username: string;
+  email: string;
+  completedChallenges?: string[];
+  score?: number;
+}
+
+export interface MockSubmission {
+  id: string;
+  challengeId: string;
+  userId: string;
+  totalCost: number;
+  score: number;
+  timestamp: string;
+}
+
 // Mock users stored in localStorage
-export const getMockUser = () => {
+export const getMockUser = (): MockUser | null => {
   const user = localStorage.getItem('mockUser');
   return user ? JSON.parse(user) : null;
 };
 
-export const setMockUser = (user) => {
+export const setMockUser = (user: MockUser): void => {
   localStorage.setItem('mockUser', JSON.stringify(user));
 };
 
-export const removeMockUser = () => {
+export const removeMockUser = (): void => {
   localStorage.removeItem('mockUser');
 };
 
 // Mock submissions stored in localStorage
-export const getMockSubmissions = () => {
+export const getMockSubmissions = (): MockSubmission[] => {
   const submissions = localStorage.getItem('mockSubmissions');
   return submissions ? JSON.parse(submissions) : [];
 };
 
-export const addMockSubmission = (submission) => {
+export const addMockSubmission = (submission: MockSubmission): void => {
   const submissions = getMockSubmissions();
   submissions.push(submission);
   localStorage.setItem('mockSubmissions', JSON.stringify(submissions));

@@ -1,5 +1,7 @@
+import { CloudProvider, ProviderLogo, ServiceCategory } from '../types';
+
 // Cloud provider logos using data URIs or CDN links
-export const providerLogos = {
+export const providerLogos: Record<CloudProvider, ProviderLogo> = {
   AWS: {
     icon: 'https://cdn.worldvectorlogo.com/logos/aws-2.svg',
     color: '#FF9900',
@@ -28,7 +30,7 @@ export const providerLogos = {
 };
 
 // Service-specific icons (for individual services)
-export const serviceLogos = {
+export const serviceLogos: Record<string, string> = {
   // AWS Services
   'EC2': 'https://cdn.worldvectorlogo.com/logos/aws-ec2.svg',
   'Lambda': 'https://cdn.worldvectorlogo.com/logos/aws-lambda-1.svg',
@@ -74,14 +76,14 @@ export const serviceLogos = {
 };
 
 // Fallback function to get icon
-export const getServiceIcon = (serviceName, category) => {
+export const getServiceIcon = (serviceName: string, category?: ServiceCategory): string => {
   // Check if we have a specific logo
   if (serviceLogos[serviceName]) {
     return serviceLogos[serviceName];
   }
 
   // Fallback to category emoji
-  const categoryIcons = {
+  const categoryIcons: Record<string, string> = {
     compute: '⚡',
     storage: '💾',
     database: '🗄️',
@@ -92,5 +94,5 @@ export const getServiceIcon = (serviceName, category) => {
     cache: '⚡'
   };
 
-  return categoryIcons[category] || '📦';
+  return category ? (categoryIcons[category] || '📦') : '📦';
 };

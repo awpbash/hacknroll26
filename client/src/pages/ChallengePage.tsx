@@ -6,6 +6,7 @@ import { mockChallenges } from '../data/mockData';
 import { cloudServices } from '../data/cloudServices';
 import { useAuth } from '../context/AuthContext';
 import { providerLogos } from '../data/providerLogos';
+import { Challenge, CloudProvider, ArchitectureState, ArchitectureNode, ArchitectureEdge } from '../types';
 
 const PageContainer = styled.div`
   max-width: 1600px;
@@ -40,7 +41,11 @@ const BadgeContainer = styled.div`
   align-items: center;
 `;
 
-const DifficultyBadge = styled.span`
+interface DifficultyBadgeProps {
+  difficulty: string;
+}
+
+const DifficultyBadge = styled.span<DifficultyBadgeProps>`
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -110,7 +115,11 @@ const Section = styled.div`
   }
 `;
 
-const SectionTitle = styled.h3`
+interface SectionTitleProps {
+  icon?: string;
+}
+
+const SectionTitle = styled.h3<SectionTitleProps>`
   font-size: 18px;
   margin: 0 0 16px 0;
   color: var(--text-primary);
@@ -183,7 +192,11 @@ const ProviderSelector = styled.div`
   margin-bottom: 20px;
 `;
 
-const ProviderButton = styled.button`
+interface ProviderButtonProps {
+  active?: boolean;
+}
+
+const ProviderButton = styled.button<ProviderButtonProps>`
   padding: 10px 20px;
   border: 2px solid ${props => props.active ? 'var(--accent-primary)' : 'var(--border-color)'};
   background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
@@ -205,7 +218,11 @@ const ProviderButton = styled.button`
   }
 `;
 
-const ProviderLogo = styled.img`
+interface ProviderLogoProps {
+  active?: boolean;
+}
+
+const ProviderLogo = styled.img<ProviderLogoProps>`
   width: 20px;
   height: 20px;
   object-fit: contain;
@@ -239,7 +256,11 @@ const SubmitButton = styled.button`
   }
 `;
 
-const ResultPanel = styled.div`
+interface ResultPanelProps {
+  passed?: boolean;
+}
+
+const ResultPanel = styled.div<ResultPanelProps>`
   margin-top: 24px;
   padding: 28px;
   border-radius: 12px;
@@ -248,7 +269,11 @@ const ResultPanel = styled.div`
   box-shadow: var(--shadow-lg);
 `;
 
-const ResultTitle = styled.h3`
+interface ResultTitleProps {
+  passed?: boolean;
+}
+
+const ResultTitle = styled.h3<ResultTitleProps>`
   margin: 0 0 20px 0;
   color: ${props => props.passed ? 'var(--accent-success)' : 'var(--accent-error)'};
   font-size: 24px;
@@ -295,7 +320,11 @@ const FeedbackSection = styled.div`
   margin-top: 20px;
 `;
 
-const FeedbackItem = styled.div`
+interface FeedbackItemProps {
+  passed?: boolean;
+}
+
+const FeedbackItem = styled.div<FeedbackItemProps>`
   padding: 12px 0;
   color: var(--text-secondary);
   line-height: 1.6;
@@ -320,28 +349,47 @@ const LoadingContainer = styled.div`
   font-size: 18px;
 `;
 
+interface EvaluationResult {
+  passed: boolean;
+  score: number;
+  totalCost: number;
+  complexity: number;
+  connections: number;
+  feedback: string[];
+  errors: string[];
+  warnings: string[];
+  llmFeedback: {
+    summary: string;
+  };
+}
+
+interface SubmissionResult {
+  status: string;
+  evaluation: EvaluationResult;
+}
+
 // Mock evaluation function
-const evaluateArchitecture = (challenge, architecture, provider) => {
-  const nodes = architecture.nodes || [];
-  const edges = architecture.edges || [];
+const evaluateArchitecture = (challenge: Challenge, architecture: ArchitectureState, provider: CloudProvider): EvaluationResult => {
+  const nodes: ArchitectureNode[] = architecture.nodes || [];
+  const edges: ArchitectureEdge[] = architecture.edges || [];
 
   // Calculate total cost
-  let totalCost = 0;
-  nodes.forEach(node => {
+  let totalCost: number = 0;
+  nodes.forEach((node: ArchitectureNode) => {
     const cost = node.data?.cost;
     if (cost) {
-      totalCost += parseFloat(cost);
+      totalCost += parseFloat(cost.toString());
     }
   });
 
   // Check constraints
-  const errors = [];
-  const feedback = [];
-  const warnings = [];
-  let score = 0;
+  const errors: string[] = [];
+  const feedback: string[] = [];
+  const warnings: string[] = [];
+  let score: number = 0;
 
   // Check max cost constraint
-  if (totalCost > challenge.constraints.maxCost) {
+  if (challenge.constraints.maxCost && totalCost > challenge.constraints.maxCost) {
     errors.push(`Cost ($${totalCost.toFixed(2)}/month) exceeds budget ($${challenge.constraints.maxCost}/month)`);
   } else {
     feedback.push(`Cost optimization: Excellent! Your solution costs $${totalCost.toFixed(2)}/month`);
@@ -349,10 +397,10 @@ const evaluateArchitecture = (challenge, architecture, provider) => {
   }
 
   // Check required services
-  const requiredCategories = challenge.constraints.requiredServices || [];
-  const usedCategories = [...new Set(nodes.map(n => n.data?.category).filter(Boolean))];
+  const requiredCategories: string[] = challenge.constraints.requiredServices || [];
+  const usedCategories: string[] = [...new Set(nodes.map((n: ArchitectureNode) => n.data?.category).filter(Boolean))];
 
-  requiredCategories.forEach(required => {
+  requiredCategories.forEach((required: string) => {
     if (!usedCategories.includes(required)) {
       errors.push(`Missing required service category: ${required}`);
     } else {
@@ -377,10 +425,10 @@ const evaluateArchitecture = (challenge, architecture, provider) => {
   }
 
   // Check input/output specifications
-  let nodesWithIO = 0;
-  let nodesWithoutIO = 0;
+  let nodesWithIO: number = 0;
+  let nodesWithoutIO: number = 0;
 
-  nodes.forEach(node => {
+  nodes.forEach((node: ArchitectureNode) => {
     const hasInput = node.data?.inputSpec && node.data.inputSpec.trim().length > 0;
     const hasOutput = node.data?.outputSpec && node.data.outputSpec.trim().length > 0;
 
@@ -401,26 +449,26 @@ const evaluateArchitecture = (challenge, architecture, provider) => {
   }
 
   // Check for grouped components
-  const groupedNodes = nodes.filter(n => n.data?.groupId);
+  const groupedNodes = nodes.filter((n: ArchitectureNode) => (n.data as any)?.groupId);
   if (groupedNodes.length > 0) {
-    const groups = [...new Set(groupedNodes.map(n => n.data.groupId))];
+    const groups = [...new Set(groupedNodes.map((n: ArchitectureNode) => (n.data as any).groupId))];
     feedback.push(`Component organization: ${groups.length} logical groups identified`);
     score += 10;
   }
 
   // Validate edge connections make sense
-  const connectedNodeIds = new Set();
-  edges.forEach(edge => {
+  const connectedNodeIds = new Set<string>();
+  edges.forEach((edge: ArchitectureEdge) => {
     connectedNodeIds.add(edge.source);
     connectedNodeIds.add(edge.target);
   });
 
-  const isolatedNodes = nodes.filter(n => !connectedNodeIds.has(n.id));
+  const isolatedNodes = nodes.filter((n: ArchitectureNode) => !connectedNodeIds.has(n.id));
   if (isolatedNodes.length > 0 && nodes.length > 1) {
     warnings.push(`${isolatedNodes.length} service(s) are not connected to the architecture`);
   }
 
-  const passed = errors.length === 0;
+  const passed: boolean = errors.length === 0;
 
   return {
     passed,
@@ -439,22 +487,22 @@ const evaluateArchitecture = (challenge, architecture, provider) => {
   };
 };
 
-const ChallengePage = () => {
-  const { id } = useParams();
+const ChallengePage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const [challenge, setChallenge] = useState(null);
-  const [selectedProvider, setSelectedProvider] = useState('AWS');
-  const [architecture, setArchitecture] = useState({ nodes: [], edges: [] });
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('AWS');
+  const [architecture, setArchitecture] = useState<ArchitectureState>({ nodes: [], edges: [] });
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [result, setResult] = useState<SubmissionResult | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Load challenge from mock data
-    const foundChallenge = mockChallenges.find(c => c.id === id);
-    setChallenge(foundChallenge);
+    const foundChallenge = mockChallenges.find((c: Challenge) => c.id === id);
+    setChallenge(foundChallenge || null);
 
     // Load existing infrastructure if present
     if (foundChallenge?.existingInfrastructure) {
@@ -467,7 +515,7 @@ const ChallengePage = () => {
     setLoading(false);
   }, [id]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!isAuthenticated) {
       alert('Please login to submit solutions');
       navigate('/login');
@@ -476,6 +524,10 @@ const ChallengePage = () => {
 
     if (architecture.nodes.length === 0) {
       alert('Please design an architecture before submitting');
+      return;
+    }
+
+    if (!challenge) {
       return;
     }
 
@@ -535,7 +587,7 @@ const ChallengePage = () => {
           <Section>
             <SectionTitle icon="✅">Requirements</SectionTitle>
             <RequirementsList>
-              {challenge.requirements.map((req, index) => (
+              {challenge.requirements.map((req: string, index: number) => (
                 <RequirementItem key={index}>{req}</RequirementItem>
               ))}
             </RequirementsList>
@@ -562,7 +614,7 @@ const ChallengePage = () => {
                 Your company already has the following services deployed. Build upon this existing setup:
               </Description>
               <ConstraintBox>
-                {challenge.existingInfrastructure.nodes.map((node) => (
+                {challenge.existingInfrastructure.nodes.map((node: ArchitectureNode) => (
                   <ConstraintItem key={node.id}>
                     <span style={{ fontWeight: 600, color: 'var(--accent-success)' }}>
                       {node.data.serviceName}
@@ -582,7 +634,7 @@ const ChallengePage = () => {
           <SectionTitle icon="🏗️">Design Your Architecture</SectionTitle>
 
           <ProviderSelector>
-            {['AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'].map(provider => (
+            {(['AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'] as CloudProvider[]).map((provider: CloudProvider) => (
               <ProviderButton
                 key={provider}
                 active={selectedProvider === provider}
@@ -600,7 +652,7 @@ const ChallengePage = () => {
 
           <ArchitectureBuilder
             provider={selectedProvider}
-            services={cloudServices}
+            services={cloudServices as any}
             onArchitectureChange={setArchitecture}
             initialNodes={challenge?.existingInfrastructure?.nodes || []}
             initialEdges={challenge?.existingInfrastructure?.edges || []}
@@ -643,7 +695,7 @@ const ChallengePage = () => {
           {result.evaluation.feedback.length > 0 && (
             <FeedbackSection>
               <SectionTitle>Feedback</SectionTitle>
-              {result.evaluation.feedback.map((fb, index) => (
+              {result.evaluation.feedback.map((fb: string, index: number) => (
                 <FeedbackItem key={index} passed={true}>
                   {fb}
                 </FeedbackItem>
@@ -654,7 +706,7 @@ const ChallengePage = () => {
           {result.evaluation.errors.length > 0 && (
             <FeedbackSection>
               <SectionTitle>Issues</SectionTitle>
-              {result.evaluation.errors.map((error, index) => (
+              {result.evaluation.errors.map((error: string, index: number) => (
                 <FeedbackItem key={index} passed={false}>
                   {error}
                 </FeedbackItem>
@@ -665,7 +717,7 @@ const ChallengePage = () => {
           {result.evaluation.warnings && result.evaluation.warnings.length > 0 && (
             <FeedbackSection>
               <SectionTitle>Suggestions</SectionTitle>
-              {result.evaluation.warnings.map((warning, index) => (
+              {result.evaluation.warnings.map((warning: string, index: number) => (
                 <FeedbackItem key={index} passed={true} style={{ color: 'var(--accent-warning)' }}>
                   {warning}
                 </FeedbackItem>

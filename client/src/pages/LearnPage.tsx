@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { cloudServices } from '../data/cloudServices';
 import { providerLogos } from '../data/providerLogos';
+import { CloudProvider, CloudService } from '../types';
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -38,7 +39,11 @@ const ProviderTabs = styled.div`
   flex-wrap: wrap;
 `;
 
-const ProviderTab = styled.button`
+interface ProviderTabProps {
+  active?: boolean;
+}
+
+const ProviderTab = styled.button<ProviderTabProps>`
   padding: 14px 32px;
   background: ${props => props.active ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-secondary)'};
   color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
@@ -60,11 +65,50 @@ const ProviderTab = styled.button`
   }
 `;
 
-const ProviderLogo = styled.img`
+interface ProviderLogoProps {
+  active?: boolean;
+}
+
+const ProviderLogo = styled.img<ProviderLogoProps>`
   width: 24px;
   height: 24px;
   object-fit: contain;
   filter: ${props => props.active ? 'brightness(0) invert(1)' : 'brightness(1)'};
+`;
+
+const CategoryTabs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+`;
+
+interface CategoryTabProps {
+  active?: boolean;
+}
+
+const CategoryTab = styled.button<CategoryTabProps>`
+  padding: 10px 20px;
+  background: ${props => props.active ? 'var(--accent-primary)' : 'transparent'};
+  color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
+  border: 1px solid ${props => props.active ? 'var(--accent-primary)' : 'var(--border-color)'};
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-tertiary)'};
+    border-color: var(--accent-primary);
+  }
 `;
 
 const CategorySection = styled.div`
@@ -159,12 +203,21 @@ const ServiceTag = styled.span`
   font-weight: 600;
 `;
 
-const LearnPage = () => {
-  const [selectedProvider, setSelectedProvider] = useState('AWS');
+interface CategoryIcons {
+  [key: string]: string;
+}
 
-  const providers = ['AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'];
+interface CategoryNames {
+  [key: string]: string;
+}
 
-  const categoryIcons = {
+const LearnPage: React.FC = () => {
+  const [selectedProvider, setSelectedProvider] = useState<CloudProvider | 'All'>('AWS');
+  const [selectedCategory, setSelectedCategory] = useState<string>('compute');
+
+  const providers: (CloudProvider | 'All')[] = ['All', 'AWS', 'Azure', 'GCP', 'RunPod', 'MongoDB'];
+
+  const categoryIcons: CategoryIcons = {
     compute: '⚡',
     storage: '💾',
     database: '🗄️',
@@ -173,16 +226,49 @@ const LearnPage = () => {
     serverless: '☁️'
   };
 
-  const categoryNames = {
+  const categoryNames: CategoryNames = {
     compute: 'Compute Services',
     storage: 'Storage Services',
     database: 'Database Services',
     networking: 'Networking Services',
     ai: 'AI & Machine Learning',
-    serverless: 'Serverless Services'
+    serverless: 'Serverless Services',
+    cache: 'Caching Services',
+    messaging: 'Messaging Services'
   };
 
-  const services = cloudServices[selectedProvider] || {};
+  // Get all available categories across all providers
+  const allCategories = Array.from(
+    new Set(
+      Object.values(cloudServices).flatMap((providerServices: any) =>
+        Object.keys(providerServices)
+      )
+    )
+  );
+
+  // Get services based on selected view
+  let services: Record<string, CloudService[]> = {};
+
+  if (selectedProvider === 'All') {
+    // For "All" view, collect services by category across all providers
+    const categoryServices: Record<string, CloudService[]> = {};
+    allCategories.forEach(cat => {
+      categoryServices[cat] = [];
+    });
+
+    Object.entries(cloudServices).forEach(([, providerServices]: [string, any]) => {
+      Object.entries(providerServices).forEach(([category, serviceList]: [string, any]) => {
+        if (!categoryServices[category]) {
+          categoryServices[category] = [];
+        }
+        categoryServices[category].push(...serviceList);
+      });
+    });
+
+    services = { [selectedCategory]: categoryServices[selectedCategory] || [] };
+  } else {
+    services = (cloudServices as any)[selectedProvider] || {};
+  }
 
   return (
     <PageContainer>
@@ -194,23 +280,40 @@ const LearnPage = () => {
       </Header>
 
       <ProviderTabs>
-        {providers.map(provider => (
+        {providers.map((provider: CloudProvider | 'All') => (
           <ProviderTab
             key={provider}
             active={selectedProvider === provider}
             onClick={() => setSelectedProvider(provider)}
           >
-            <ProviderLogo
-              src={providerLogos[provider]?.icon}
-              alt={`${provider} logo`}
-              active={selectedProvider === provider}
-            />
-            {provider}
+            {provider !== 'All' && providerLogos[provider as CloudProvider] && (
+              <ProviderLogo
+                src={providerLogos[provider as CloudProvider]?.icon}
+                alt={`${provider} logo`}
+                active={selectedProvider === provider}
+              />
+            )}
+            {provider === 'All' ? '🌐 All' : provider}
           </ProviderTab>
         ))}
       </ProviderTabs>
 
-      {Object.entries(services).map(([category, serviceList]) => (
+      {selectedProvider === 'All' && (
+        <CategoryTabs>
+          {allCategories.map((category: string) => (
+            <CategoryTab
+              key={category}
+              active={selectedCategory === category}
+              onClick={() => setSelectedCategory(category)}
+            >
+              <span>{categoryIcons[category] || '📦'}</span>
+              {categoryNames[category] || category}
+            </CategoryTab>
+          ))}
+        </CategoryTabs>
+      )}
+
+      {Object.entries(services).map(([category, serviceList]: [string, CloudService[]]) => (
         <CategorySection key={category}>
           <CategoryHeader>
             <CategoryIcon>{categoryIcons[category] || '📦'}</CategoryIcon>
@@ -218,7 +321,7 @@ const LearnPage = () => {
           </CategoryHeader>
 
           <ServiceGrid>
-            {serviceList.map(service => (
+            {serviceList.map((service: CloudService) => (
               <ServiceCard key={service.name}>
                 <ServiceHeader>
                   <ServiceName>{service.name}</ServiceName>
@@ -231,7 +334,7 @@ const LearnPage = () => {
 
                 <ServiceTags>
                   <ServiceTag>{category}</ServiceTag>
-                  {service.features && service.features.slice(0, 2).map((feature, idx) => (
+                  {(service as any).features && (service as any).features.slice(0, 2).map((feature: string, idx: number) => (
                     <ServiceTag key={idx}>{feature}</ServiceTag>
                   ))}
                 </ServiceTags>

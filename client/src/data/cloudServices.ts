@@ -1,5 +1,23 @@
 // Cloud service definitions with pricing - copied from backend for standalone frontend
-export const cloudServices = {
+
+import type { ServiceCategory } from '../types';
+
+export interface CloudServiceDefinition {
+  id: string;
+  name: string;
+  baseCost: number;
+  category: ServiceCategory;
+  specs: string;
+  description?: string;
+}
+
+export interface CloudServicesData {
+  [key: string]: {
+    [category: string]: CloudServiceDefinition[];
+  };
+}
+
+export const cloudServices: CloudServicesData = {
   AWS: {
     compute: [
       { id: 'ec2-t2-micro', name: 'EC2 t2.micro', baseCost: 0.0116, category: 'compute', specs: '1 vCPU, 1GB RAM' },

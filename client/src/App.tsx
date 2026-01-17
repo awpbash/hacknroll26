@@ -11,7 +11,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import LearnPage from './pages/LearnPage';
 import GlobalStyles from './styles/GlobalStyles';
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <AuthProvider>
@@ -29,6 +29,6 @@ function App() {
       </AuthProvider>
     </Router>
   );
-}
+};
 
 export default App;

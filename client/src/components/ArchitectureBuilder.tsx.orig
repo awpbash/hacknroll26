@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, DragEvent } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -7,11 +7,22 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   MarkerType,
+  Node,
+  Edge,
+  Connection,
+  ReactFlowInstance,
+  OnNodesChange,
+  OnEdgesChange,
+  NodeTypes,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import styled from 'styled-components';
-import CustomServiceNode from './CustomServiceNode';
-import { providerLogos } from '../data/providerLogos';
+import CustomServiceNode, { CustomServiceNodeData } from './CustomServiceNode';
+import { CloudService, CloudProvider, ServiceCategory, ArchitectureState } from '../types';
+
+interface CategoryTitleProps {
+  icon?: string;
+}
 
 const BuilderContainer = styled.div`
   display: flex;
@@ -43,7 +54,7 @@ const SectionTitle = styled.h3`
   letter-spacing: 0.5px;
 `;
 
-const CategoryTitle = styled.h4`
+const CategoryTitle = styled.h4<CategoryTitleProps>`
   font-size: 12px;
   color: var(--text-secondary);
   margin: 12px 0 8px 0;
@@ -58,7 +69,11 @@ const CategoryTitle = styled.h4`
   }
 `;
 
-const ServiceCard = styled.div`
+interface ServiceCardProps {
+  bgColor?: string;
+}
+
+const ServiceCard = styled.div<ServiceCardProps>`
   padding: 10px;
   margin: 6px 0;
   background: ${props => props.bgColor || 'var(--bg-tertiary)'};
@@ -109,7 +124,11 @@ const Toolbar = styled.div`
   gap: 8px;
 `;
 
-const ToolButton = styled.button`
+interface ToolButtonProps {
+  disabled?: boolean;
+}
+
+const ToolButton = styled.button<ToolButtonProps>`
   padding: 8px 16px;
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -131,29 +150,58 @@ const ToolButton = styled.button`
     background: var(--accent-primary);
     border-color: var(--accent-primary);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 // Category icons and colors
-const categoryConfig = {
+interface CategoryConfig {
+  icon: string;
+  color: string;
+}
+
+const categoryConfig: Record<ServiceCategory, CategoryConfig> = {
   compute: { icon: '⚡', color: '#FF9900' },
   storage: { icon: '💾', color: '#10b981' },
   database: { icon: '🗄️', color: '#8b5cf6' },
   networking: { icon: '🌐', color: '#0078D4' },
   serverless: { icon: '☁️', color: '#f59e0b' },
   ai: { icon: '🤖', color: '#ef4444' },
-  messaging: { icon: '📨', color: '#06b6d4' },
   cache: { icon: '⚡', color: '#ec4899' }
 };
 
-const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange, initialNodes = [], initialEdges = [] }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [selectedNodes, setSelectedNodes] = useState([]);
-  const [nextGroupId, setNextGroupId] = useState(1);
-  const [initialized, setInitialized] = useState(false);
+// Component Props Interface
+interface ArchitectureBuilderProps {
+  provider?: CloudProvider;
+  services: Record<CloudProvider, Record<ServiceCategory, CloudService[]>>;
+  onArchitectureChange?: (architecture: ArchitectureState) => void;
+  initialNodes?: Node<CustomServiceNodeData>[];
+  initialEdges?: Edge[];
+}
 
-  const nodeTypes = useMemo(() => ({
+// Drag Data Interface
+interface DragServiceData extends CloudService {
+  category: ServiceCategory;
+}
+
+const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
+  provider = 'AWS',
+  services,
+  onArchitectureChange,
+  initialNodes = [],
+  initialEdges = []
+}) => {
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomServiceNodeData>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [nextGroupId, setNextGroupId] = useState<number>(1);
+  const [initialized, setInitialized] = useState<boolean>(false);
+
+  const nodeTypes: NodeTypes = useMemo(() => ({
     serviceNode: CustomServiceNode
   }), []);
 
@@ -180,7 +228,7 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
   }, [nodes]);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge({
+    (params: Connection) => setEdges((eds) => addEdge({
       ...params,
       animated: true,
       style: { stroke: 'var(--accent-primary)', strokeWidth: 2 },
@@ -189,25 +237,26 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
     [setEdges]
   );
 
-  const onDragOver = useCallback((event) => {
+  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
   const onDrop = useCallback(
-    (event) => {
+    (event: DragEvent<HTMLDivElement>) => {
       event.preventDefault();
 
       if (!reactFlowInstance) return;
 
-      const serviceData = JSON.parse(event.dataTransfer.getData('application/reactflow'));
+      const serviceData: DragServiceData = JSON.parse(event.dataTransfer.getData('application/reactflow'));
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      const newNode = {
-        id: `${serviceData.id}-${Date.now()}`,
+      const newNodeId = `${serviceData.id}-${Date.now()}`;
+      const newNode: Node<CustomServiceNodeData> = {
+        id: newNodeId,
         type: 'serviceNode',
         position,
         data: {
@@ -219,28 +268,28 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
           description: serviceData.description,
           inputSpec: '',
           outputSpec: '',
-          onLabelChange: (label) => {
+          onLabelChange: (label: string) => {
             setNodes((nds) =>
               nds.map((node) =>
-                node.id === newNode.id
+                node.id === newNodeId
                   ? { ...node, data: { ...node.data, customLabel: label } }
                   : node
               )
             );
           },
-          onInputChange: (input) => {
+          onInputChange: (input: string) => {
             setNodes((nds) =>
               nds.map((node) =>
-                node.id === newNode.id
+                node.id === newNodeId
                   ? { ...node, data: { ...node.data, inputSpec: input } }
                   : node
               )
             );
           },
-          onOutputChange: (output) => {
+          onOutputChange: (output: string) => {
             setNodes((nds) =>
               nds.map((node) =>
-                node.id === newNode.id
+                node.id === newNodeId
                   ? { ...node, data: { ...node.data, outputSpec: output } }
                   : node
               )
@@ -258,12 +307,12 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
     [reactFlowInstance, setNodes]
   );
 
-  const onDragStart = (event, service) => {
+  const onDragStart = (event: DragEvent<HTMLDivElement>, service: CloudService): void => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(service));
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleGroupSelected = () => {
+  const handleGroupSelected = (): void => {
     if (selectedNodes.length < 2) {
       alert('Please select at least 2 nodes to group');
       return;
@@ -280,7 +329,7 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
     setNextGroupId(prev => prev + 1);
   };
 
-  const handleUngroupSelected = () => {
+  const handleUngroupSelected = (): void => {
     if (selectedNodes.length === 0) {
       alert('Please select nodes to ungroup');
       return;
@@ -295,7 +344,7 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
     );
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = (): void => {
     if (window.confirm('Clear all nodes and edges?')) {
       setNodes([]);
       setEdges([]);
@@ -303,7 +352,7 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
   };
 
   // Organize services by category
-  const categorizedServices = {};
+  const categorizedServices: Record<string, CloudService[]> = {};
   if (services && services[provider]) {
     Object.entries(services[provider]).forEach(([category, serviceList]) => {
       categorizedServices[category] = serviceList;
@@ -321,13 +370,13 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
 
           {Object.entries(categorizedServices).map(([category, serviceList]) => (
             <div key={category}>
-              <CategoryTitle icon={categoryConfig[category]?.icon || '📦'}>
+              <CategoryTitle icon={categoryConfig[category as ServiceCategory]?.icon || '📦'}>
                 {category}
               </CategoryTitle>
               {serviceList.map((service) => (
                 <ServiceCard
                   key={service.id}
-                  bgColor={categoryConfig[category]?.color || '#6366f1'}
+                  bgColor={categoryConfig[category as ServiceCategory]?.color || '#6366f1'}
                   draggable
                   onDragStart={(e) => onDragStart(e, service)}
                 >
@@ -382,7 +431,7 @@ const ArchitectureBuilder = ({ provider = 'AWS', services, onArchitectureChange,
         >
           <Controls />
           <MiniMap
-            nodeColor={(node) => {
+            nodeColor={(node: Node<CustomServiceNodeData>) => {
               const category = node.data?.category;
               return categoryConfig[category]?.color || '#6366f1';
             }}

@@ -1,0 +1,23 @@
+--- src/components/ArchitectureBuilder.tsx
++++ src/components/ArchitectureBuilder.tsx
+@@ -215,7 +213,10 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
+   // Notify parent of architecture changes
+   useEffect(() => {
+     if (onArchitectureChange && initialized) {
+-      onArchitectureChange({ nodes, edges });
++      onArchitectureChange({
++        nodes: nodes as any,
++        edges: edges as any
++      });
+     }
+   }, [nodes, edges, onArchitectureChange, initialized]);
+ 
+@@ -436,7 +437,7 @@ const ArchitectureBuilder: React.FC<ArchitectureBuilderProps> = ({
+       <Controls />
+       <Background
+         color="#aaa"
+-        variant="dots"
++        variant={'dots' as any}
+         gap={16}
+       />
+     </ReactFlowContainer>

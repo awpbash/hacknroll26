@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { mockChallenges } from '../data/mockData';
+import { Challenge } from '../types';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -38,7 +39,11 @@ const FilterBar = styled.div`
   justify-content: center;
 `;
 
-const FilterButton = styled.button`
+interface FilterButtonProps {
+  active?: boolean;
+}
+
+const FilterButton = styled.button<FilterButtonProps>`
   padding: 10px 20px;
   border: 2px solid ${props => props.active ? 'var(--accent-primary)' : 'var(--border-color)'};
   background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-secondary)'};
@@ -99,7 +104,11 @@ const BadgeContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const DifficultyBadge = styled.span`
+interface DifficultyBadgeProps {
+  difficulty: string;
+}
+
+const DifficultyBadge = styled.span<DifficultyBadgeProps>`
   padding: 6px 14px;
   border-radius: 6px;
   font-size: 13px;
@@ -144,7 +153,11 @@ const ChallengeStats = styled.div`
   border-top: 1px solid var(--border-color);
 `;
 
-const StatItem = styled.span`
+interface StatItemProps {
+  icon?: string;
+}
+
+const StatItem = styled.span<StatItemProps>`
   display: flex;
   align-items: center;
   gap: 6px;
@@ -162,18 +175,18 @@ const EmptyState = styled.div`
   font-size: 18px;
 `;
 
-const ChallengesListPage = () => {
+const ChallengesListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [difficultyFilter, setDifficultyFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('All');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
 
-  const filteredChallenges = mockChallenges.filter(challenge => {
+  const filteredChallenges: Challenge[] = mockChallenges.filter((challenge: Challenge) => {
     const matchesDifficulty = difficultyFilter === 'All' || challenge.difficulty === difficultyFilter;
     const matchesCategory = categoryFilter === 'All' || challenge.category === categoryFilter;
     return matchesDifficulty && matchesCategory;
   });
 
-  const handleChallengeClick = (challengeId) => {
+  const handleChallengeClick = (challengeId: string): void => {
     navigate(`/challenge/${challengeId}`);
   };
 
@@ -186,7 +199,7 @@ const ChallengesListPage = () => {
 
       <FilterBar>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {['All', 'Easy', 'Medium', 'Hard'].map(difficulty => (
+          {['All', 'Easy', 'Medium', 'Hard'].map((difficulty: string) => (
             <FilterButton
               key={difficulty}
               active={difficultyFilter === difficulty}
@@ -198,7 +211,7 @@ const ChallengesListPage = () => {
         </div>
         <div style={{ width: '100%', height: '1px', background: 'var(--border-color)' }} />
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {['All', 'Storage', 'Compute', 'Database', 'Serverless', 'Full-Stack'].map(category => (
+          {['All', 'Storage', 'Compute', 'Database', 'Serverless', 'Full-Stack'].map((category: string) => (
             <FilterButton
               key={category}
               active={categoryFilter === category}
@@ -216,7 +229,7 @@ const ChallengesListPage = () => {
             No challenges found. Try adjusting your filters.
           </EmptyState>
         ) : (
-          filteredChallenges.map(challenge => (
+          filteredChallenges.map((challenge: Challenge) => (
             <ChallengeCard
               key={challenge.id}
               onClick={() => handleChallengeClick(challenge.id)}
@@ -233,10 +246,10 @@ const ChallengesListPage = () => {
               <ChallengeDescription>{challenge.description}</ChallengeDescription>
               <ChallengeStats>
                 <StatItem icon="✓">
-                  Acceptance: {challenge.acceptanceRate.toFixed(1)}%
+                  Acceptance: {challenge.acceptanceRate ? `${challenge.acceptanceRate.toFixed(1)}%` : 'New'}
                 </StatItem>
                 <StatItem icon="📊">
-                  {challenge.submissions} submissions
+                  {challenge.submissions || 0} submissions
                 </StatItem>
               </ChallengeStats>
             </ChallengeCard>

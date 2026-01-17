@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { mockChallenges } from '../data/mockData';
+import { Challenge } from '../types';
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -16,7 +17,12 @@ const FeaturedSection = styled.div`
   margin-bottom: 40px;
 `;
 
-const FeaturedCard = styled.div`
+interface FeaturedCardProps {
+  gradient?: string;
+  emoji?: string;
+}
+
+const FeaturedCard = styled.div<FeaturedCardProps>`
   background: ${props => props.gradient || 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))'};
   padding: 32px;
   border-radius: 16px;
@@ -116,7 +122,12 @@ const TopicGrid = styled.div`
   margin-bottom: 32px;
 `;
 
-const TopicButton = styled.button`
+interface TopicButtonProps {
+  active?: boolean;
+  icon?: string;
+}
+
+const TopicButton = styled.button<TopicButtonProps>`
   padding: 12px 20px;
   background: ${props => props.active ? 'var(--accent-primary)' : 'var(--bg-secondary)'};
   color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
@@ -169,7 +180,11 @@ const ChallengeRow = styled.div`
   }
 `;
 
-const ChallengeStatus = styled.div`
+interface ChallengeStatusProps {
+  completed?: boolean;
+}
+
+const ChallengeStatus = styled.div<ChallengeStatusProps>`
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -206,7 +221,11 @@ const ChallengeMeta = styled.div`
   color: var(--text-muted);
 `;
 
-const DifficultyBadge = styled.span`
+interface DifficultyBadgeProps {
+  difficulty: string;
+}
+
+const DifficultyBadge = styled.span<DifficultyBadgeProps>`
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 13px;
@@ -226,11 +245,16 @@ const AcceptanceRate = styled.div`
   font-size: 14px;
 `;
 
-const HomePage = () => {
-  const navigate = useNavigate();
-  const [selectedTopic, setSelectedTopic] = useState('All Topics');
+interface Topic {
+  name: string;
+  icon: string;
+}
 
-  const topics = [
+const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [selectedTopic, setSelectedTopic] = useState<string>('All Topics');
+
+  const topics: Topic[] = [
     { name: 'All Topics', icon: '📋' },
     { name: 'Storage', icon: '💾' },
     { name: 'Compute', icon: '⚡' },
@@ -239,9 +263,9 @@ const HomePage = () => {
     { name: 'Full-Stack', icon: '🏗️' }
   ];
 
-  const filteredChallenges = selectedTopic === 'All Topics'
+  const filteredChallenges: Challenge[] = selectedTopic === 'All Topics'
     ? mockChallenges
-    : mockChallenges.filter(c => c.category === selectedTopic);
+    : mockChallenges.filter((c: Challenge) => c.category === selectedTopic);
 
   return (
     <PageContainer>
@@ -289,7 +313,7 @@ const HomePage = () => {
       <TopicSection>
         <SectionTitle>Topics</SectionTitle>
         <TopicGrid>
-          {topics.map(topic => (
+          {topics.map((topic: Topic) => (
             <TopicButton
               key={topic.name}
               icon={topic.icon}
@@ -309,7 +333,7 @@ const HomePage = () => {
         </SectionHeader>
 
         <ChallengeList>
-          {filteredChallenges.map((challenge, index) => (
+          {filteredChallenges.map((challenge: Challenge, index: number) => (
             <ChallengeRow
               key={challenge.id}
               onClick={() => navigate(`/challenge/${challenge.id}`)}
@@ -322,7 +346,7 @@ const HomePage = () => {
                 </ChallengeTitle>
                 <ChallengeMeta>
                   <span>💼 {challenge.category}</span>
-                  <span>📊 {challenge.submissions} submissions</span>
+                  <span>📊 {challenge.submissions || 0} submissions</span>
                 </ChallengeMeta>
               </ChallengeInfo>
 
@@ -331,7 +355,7 @@ const HomePage = () => {
               </DifficultyBadge>
 
               <AcceptanceRate>
-                {challenge.acceptanceRate.toFixed(1)}%
+                {challenge.acceptanceRate ? `${challenge.acceptanceRate.toFixed(1)}%` : 'New'}
               </AcceptanceRate>
             </ChallengeRow>
           ))}

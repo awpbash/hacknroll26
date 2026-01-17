@@ -1,9 +1,16 @@
-import React, { memo, useState } from 'react';
-import { Handle, Position, NodeResizer } from 'reactflow';
+import React, { memo, useState, ChangeEvent, CSSProperties } from 'react';
+import { Handle, Position, NodeResizer, NodeProps } from 'reactflow';
 import styled from 'styled-components';
 import { getServiceIcon } from '../data/providerLogos';
+import { ServiceCategory } from '../types';
 
-const NodeContainer = styled.div`
+interface NodeContainerProps {
+  bgColor?: string;
+  borderColor?: string;
+  glowColor?: string;
+}
+
+const NodeContainer = styled.div<NodeContainerProps>`
   background: ${props => props.bgColor || 'var(--bg-tertiary)'};
   border: 2px solid ${props => props.borderColor || 'rgba(255, 255, 255, 0.3)'};
   border-radius: 12px;
@@ -189,7 +196,7 @@ const ExistingBadge = styled.div`
   }
 `;
 
-const HandleStyle = {
+const HandleStyle: CSSProperties = {
   background: 'white',
   width: 12,
   height: 12,
@@ -198,41 +205,49 @@ const HandleStyle = {
 };
 
 // Service category colors
-const getCategoryColor = (category) => {
-  const colors = {
+const getCategoryColor = (category: ServiceCategory): string => {
+  const colors: Record<ServiceCategory, string> = {
     compute: '#FF9900',
     storage: '#10b981',
     database: '#8b5cf6',
     networking: '#0078D4',
     serverless: '#f59e0b',
     ai: '#ef4444',
-    messaging: '#06b6d4',
-    cache: '#ec4899'
+    cache: '#ec4899',
+    messaging: '#06b6d4'
   };
   return colors[category] || '#6366f1';
 };
 
-// Service category icons
-const getCategoryIcon = (category) => {
-  const icons = {
-    compute: '⚡',
-    storage: '💾',
-    database: '🗄️',
-    networking: '🌐',
-    serverless: '☁️',
-    ai: '🤖',
-    messaging: '📨',
-    cache: '⚡'
-  };
-  return icons[category] || '📦';
-};
+// Custom Node Data Interface
+export interface CustomServiceNodeData {
+  serviceName: string;
+  customLabel?: string;
+  category: ServiceCategory;
+  cost: number;
+  specs?: string;
+  description?: string;
+  inputSpec?: string;
+  outputSpec?: string;
+  groupId?: number;
+  isExisting?: boolean;
+  onLabelChange?: (label: string) => void;
+  onInputChange?: (input: string) => void;
+  onOutputChange?: (output: string) => void;
+}
 
-const CustomServiceNode = ({ data, selected }) => {
-  const [customLabel, setCustomLabel] = useState(data.customLabel || '');
-  const [inputSpec, setInputSpec] = useState(data.inputSpec || '');
-  const [outputSpec, setOutputSpec] = useState(data.outputSpec || '');
+// Component Props Interface
+interface CustomServiceNodeProps extends NodeProps {
+  data: CustomServiceNodeData;
+  selected: boolean;
+}
 
-  const handleLabelChange = (e) => {
+const CustomServiceNode: React.FC<CustomServiceNodeProps> = ({ data, selected }) => {
+  const [customLabel, setCustomLabel] = useState<string>(data.customLabel || '');
+  const [inputSpec, setInputSpec] = useState<string>(data.inputSpec || '');
+  const [outputSpec, setOutputSpec] = useState<string>(data.outputSpec || '');
+
+  const handleLabelChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const newLabel = e.target.value;
     setCustomLabel(newLabel);
     if (data.onLabelChange) {
@@ -240,7 +255,7 @@ const CustomServiceNode = ({ data, selected }) => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const newInput = e.target.value;
     setInputSpec(newInput);
     if (data.onInputChange) {
@@ -248,7 +263,7 @@ const CustomServiceNode = ({ data, selected }) => {
     }
   };
 
-  const handleOutputChange = (e) => {
+  const handleOutputChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const newOutput = e.target.value;
     setOutputSpec(newOutput);
     if (data.onOutputChange) {
@@ -285,7 +300,7 @@ const CustomServiceNode = ({ data, selected }) => {
 
       <NodeHeader>
         <ServiceIcon>
-          {isImageIcon ? <img src={icon} alt={data.serviceName} /> : icon}
+          {isImageIcon ? <img src={icon as string} alt={data.serviceName} /> : icon}
         </ServiceIcon>
         <TitleSection>
           <ServiceName title={data.serviceName}>

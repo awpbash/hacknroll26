@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 
 const glow = keyframes`
-  0%, 100% { box-shadow: var(--glow-primary); }
-  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.6); }
+  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
 `;
 
 const PageContainer = styled.div`
@@ -27,8 +27,8 @@ const FormCard = styled.div`
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: var(--accent-primary);
-    box-shadow: var(--shadow-xl), var(--glow-primary);
+    border-color: var(--accent-success);
+    box-shadow: var(--shadow-xl), var(--glow-success);
   }
 `;
 
@@ -36,7 +36,7 @@ const Title = styled.h2`
   margin: 0 0 12px 0;
   font-size: 36px;
   text-align: center;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(135deg, var(--accent-success), #059669);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -81,8 +81,8 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: var(--glow-primary);
+    border-color: var(--accent-success);
+    box-shadow: var(--glow-success);
     background: var(--bg-hover);
   }
 
@@ -93,7 +93,7 @@ const Input = styled.input`
 
 const Button = styled.button`
   padding: 16px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(135deg, var(--accent-success), #059669);
   color: white;
   border: none;
   border-radius: 10px;
@@ -106,7 +106,7 @@ const Button = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
   }
 
   &:disabled {
@@ -142,46 +142,78 @@ const LinkText = styled.p`
   font-size: 14px;
 
   a {
-    color: var(--accent-primary);
+    color: var(--accent-success);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.2s;
 
     &:hover {
-      color: var(--accent-secondary);
+      color: #059669;
       text-decoration: underline;
     }
   }
 `;
 
-const LoginPage = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+interface RegisterFormData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
-  const handleChange = (e) => {
+interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+}
+
+const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  const [formData, setFormData] = useState<RegisterFormData>({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await login(formData);
+    const registerData: RegisterData = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password
+    };
+
+    const result = await register(registerData);
 
     if (result.success) {
       navigate('/challenges');
     } else {
-      setError(result.error || 'Login failed. Please try again.');
+      setError(result.error || 'Registration failed. Please try again.');
     }
 
     setLoading(false);
@@ -190,12 +222,26 @@ const LoginPage = () => {
   return (
     <PageContainer>
       <FormCard>
-        <Title>Welcome Back</Title>
-        <Subtitle>Login to continue solving challenges</Subtitle>
+        <Title>Create Account</Title>
+        <Subtitle>Start solving cloud architecture challenges</Subtitle>
 
         {error && <ErrorMessage>{error}</ErrorMessage>}
 
         <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Choose a username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              minLength={3}
+            />
+          </FormGroup>
+
           <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -215,24 +261,38 @@ const LoginPage = () => {
               type="password"
               id="password"
               name="password"
-              placeholder="••••••••"
+              placeholder="At least 6 characters"
               value={formData.password}
+              onChange={handleChange}
+              required
+              minLength={6}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Re-enter password"
+              value={formData.confirmPassword}
               onChange={handleChange}
               required
             />
           </FormGroup>
 
           <Button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Creating account...' : 'Register'}
           </Button>
         </Form>
 
         <LinkText>
-          Don't have an account? <Link to="/register">Register here</Link>
+          Already have an account? <Link to="/login">Login here</Link>
         </LinkText>
       </FormCard>
     </PageContainer>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
