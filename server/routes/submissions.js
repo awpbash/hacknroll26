@@ -1,28 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const Submission = require('../models/Submission');
 const Challenge = require('../models/Challenge');
 const User = require('../models/User');
 const ArchitectureEvaluator = require('../utils/evaluator');
 const LLMEvaluator = require('../utils/llmEvaluator');
-
-// Middleware to verify JWT token
-const authenticateToken = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-
-  if (!token) {
-    return res.status(401).json({ message: 'No authentication token' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
+const { authenticateToken } = require('../middleware/auth');
 
 // Submit solution
 router.post('/', authenticateToken, async (req, res) => {

@@ -134,6 +134,54 @@ class User {
     const snapshot = await usersCollection.count().get();
     return snapshot.data().count;
   }
+
+  // Set password reset token
+  static async setPasswordResetToken(userId, token, expiresAt) {
+    await usersCollection.doc(userId).update({
+      passwordResetToken: token,
+      passwordResetExpires: expiresAt,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return this.findById(userId);
+  }
+
+  // Find user by reset token
+  static async findByResetToken(token) {
+    const snapshot = await usersCollection
+      .where('passwordResetToken', '==', token)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    const user = { id: doc.id, ...doc.data() };
+
+    // Check if token is expired
+    if (user.passwordResetExpires && user.passwordResetExpires.toDate() < new Date()) {
+      return null;
+    }
+
+    return user;
+  }
+
+  // Clear password reset token
+  static async clearPasswordResetToken(userId) {
+    await usersCollection.doc(userId).update({
+      passwordResetToken: admin.firestore.FieldValue.delete(),
+      passwordResetExpires: admin.firestore.FieldValue.delete(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return this.findById(userId);
+  }
+
+  // Update password
+  static async updatePassword(userId, newPasswordHash) {
+    await usersCollection.doc(userId).update({
+      password: newPasswordHash,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return this.findById(userId);
+  }
 }
 
 module.exports = User;

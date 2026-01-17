@@ -11,6 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Optional: Apply general API rate limiting
+if (process.env.ENABLE_RATE_LIMIT !== 'false') {
+  const { apiLimiter } = require('./middleware/rateLimiter');
+  app.use('/api/', apiLimiter);
+}
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/challenges', require('./routes/challenges'));

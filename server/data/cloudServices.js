@@ -27,6 +27,12 @@ const cloudServices = {
       { id: 'sqs', name: 'SQS Queue', cost: 0.0000004, category: 'messaging', specs: 'Per request' },
       { id: 'sns', name: 'SNS', cost: 0.0000005, category: 'messaging', specs: 'Per notification' },
       { id: 'elasticache-redis', name: 'ElastiCache Redis', cost: 0.034, category: 'cache', specs: 'cache.t3.small' }
+    ],
+    ai: [
+      { id: 'sagemaker-inference', name: 'SageMaker Inference', cost: 0.05, category: 'ai', specs: 'ml.t3.medium' },
+      { id: 'rekognition', name: 'Rekognition', cost: 0.001, category: 'ai', specs: 'Per image' },
+      { id: 'comprehend', name: 'Comprehend', cost: 0.0001, category: 'ai', specs: 'Per 100 chars' },
+      { id: 'bedrock', name: 'Amazon Bedrock', cost: 0.0008, category: 'ai', specs: 'Per 1K tokens' }
     ]
   },
   Azure: {
@@ -47,6 +53,12 @@ const cloudServices = {
       { id: 'load-balancer', name: 'Load Balancer', cost: 0.025, category: 'networking', specs: 'Per hour' },
       { id: 'cdn', name: 'CDN', cost: 0.081, category: 'networking', specs: 'Per GB' },
       { id: 'vnet', name: 'Virtual Network', cost: 0, category: 'networking', specs: 'Free' }
+    ],
+    ai: [
+      { id: 'cognitive-vision', name: 'Computer Vision', cost: 0.001, category: 'ai', specs: 'Per image' },
+      { id: 'cognitive-language', name: 'Language Service', cost: 0.0002, category: 'ai', specs: 'Per 1K chars' },
+      { id: 'ml-inference', name: 'ML Inference', cost: 0.06, category: 'ai', specs: 'Per hour' },
+      { id: 'openai-service', name: 'Azure OpenAI', cost: 0.0006, category: 'ai', specs: 'Per 1K tokens' }
     ]
   },
   GCP: {
@@ -67,6 +79,32 @@ const cloudServices = {
       { id: 'load-balancing', name: 'Load Balancing', cost: 0.025, category: 'networking', specs: 'Per hour' },
       { id: 'cloud-cdn', name: 'Cloud CDN', cost: 0.08, category: 'networking', specs: 'Per GB' },
       { id: 'vpc-network', name: 'VPC Network', cost: 0, category: 'networking', specs: 'Free' }
+    ],
+    ai: [
+      { id: 'vision-api', name: 'Vision API', cost: 0.0015, category: 'ai', specs: 'Per 1K images' },
+      { id: 'natural-language', name: 'Natural Language API', cost: 0.0001, category: 'ai', specs: 'Per 1K chars' },
+      { id: 'vertex-ai', name: 'Vertex AI', cost: 0.05, category: 'ai', specs: 'Per hour' },
+      { id: 'palm-api', name: 'PaLM API', cost: 0.0004, category: 'ai', specs: 'Per 1K tokens' }
+    ]
+  },
+  RunPod: {
+    ai: [
+      { id: 'rtx-4090', name: 'RTX 4090', cost: 0.44, category: 'ai', specs: '24GB VRAM' },
+      { id: 'a6000', name: 'A6000', cost: 0.79, category: 'ai', specs: '48GB VRAM' },
+      { id: 'a100-40gb', name: 'A100 40GB', cost: 1.89, category: 'ai', specs: '40GB HBM2e' },
+      { id: 'a100-80gb', name: 'A100 80GB', cost: 2.49, category: 'ai', specs: '80GB HBM2e' },
+      { id: 'h100', name: 'H100', cost: 3.99, category: 'ai', specs: '80GB HBM3' },
+      { id: 'llama-2-7b', name: 'Llama 2 7B', cost: 0.0004, category: 'ai', specs: 'Per request' },
+      { id: 'llama-2-13b', name: 'Llama 2 13B', cost: 0.0008, category: 'ai', specs: 'Per request' },
+      { id: 'llama-2-70b', name: 'Llama 2 70B', cost: 0.0018, category: 'ai', specs: 'Per request' },
+      { id: 'mistral-7b', name: 'Mistral 7B', cost: 0.0003, category: 'ai', specs: 'Per request' }
+    ]
+  },
+  MongoDB: {
+    database: [
+      { id: 'mongodb-atlas-m0', name: 'MongoDB Atlas M0', cost: 0, category: 'database', specs: 'Free tier, 512MB' },
+      { id: 'mongodb-atlas-m10', name: 'MongoDB Atlas M10', cost: 0.08, category: 'database', specs: '2GB RAM, 10GB storage' },
+      { id: 'mongodb-atlas-m20', name: 'MongoDB Atlas M20', cost: 0.20, category: 'database', specs: '4GB RAM, 20GB storage' }
     ]
   }
 };

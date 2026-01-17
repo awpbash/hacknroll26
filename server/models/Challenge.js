@@ -14,7 +14,9 @@ class Challenge {
       constraints: challengeData.constraints || {
         maxCost: null,
         requiredServices: [],
-        optionalServices: []
+        optionalServices: [],
+        minServices: 1,
+        maxServices: 20
       },
       category: challengeData.category,
       testCases: challengeData.testCases || [],
