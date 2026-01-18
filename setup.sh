@@ -89,29 +89,58 @@ echo "════════════════════════�
 echo -e "${GREEN}Installation successful!${NC}"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
-echo "Next steps:"
+
+echo "Starting the app (backend + frontend) in this terminal..."
+echo -e "${YELLOW}Press Ctrl+C to stop both servers.${NC}"
 echo ""
-echo "1. Configure your database connection in server/.env"
-echo "   (Edit MONGODB_URI if needed)"
-echo ""
-echo "2. Start the backend server:"
-echo "   $ cd server && npm run dev"
-echo ""
-echo "3. In a NEW terminal, start the frontend:"
-echo "   $ cd client && npm start"
-echo ""
-echo "4. Initialize sample challenges:"
-echo "   $ curl -X POST http://localhost:5000/api/challenges/initialize"
-echo ""
-echo "5. Open your browser:"
-echo "   http://localhost:3000"
+
+# --- NEW: Run backend + frontend automatically (old Steps 2 & 3) ---
+
+BACKEND_CMD="npm run dev"
+FRONTEND_CMD="npm start"
+
+BACKEND_DIR="server"
+FRONTEND_DIR="client"
+
+PIDS=()
+
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}Stopping servers...${NC}"
+    for pid in "${PIDS[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+        fi
+    done
+    wait 2>/dev/null || true
+    echo -e "${GREEN}✓ Servers stopped.${NC}"
+}
+
+trap cleanup INT TERM EXIT
+
+echo -e "${BLUE}→ Starting backend (${BACKEND_CMD})...${NC}"
+( cd "$BACKEND_DIR" && $BACKEND_CMD ) &
+PIDS+=($!)
+
+# small delay so backend starts first
+sleep 1
+
+echo -e "${BLUE}→ Starting frontend (${FRONTEND_CMD})...${NC}"
+( cd "$FRONTEND_DIR" && $FRONTEND_CMD ) &
+PIDS+=($!)
+
 echo ""
 echo "═══════════════════════════════════════════════════════════"
+echo -e "${GREEN}Both servers are starting up.${NC}"
 echo ""
-echo "Optional: Enable AI evaluation by adding to server/.env:"
-echo "  ANTHROPIC_API_KEY=your_key_here"
-echo "  or"
-echo "  OPENAI_API_KEY=your_key_here"
+echo "Backend:"
+echo "  http://localhost:5000"
+echo ""
+echo "Frontend:"
+echo "  http://localhost:3000"
+echo ""
+echo "Optional: Initialize sample challenges:"
+echo "  curl -X POST http://localhost:5000/api/challenges/initialize"
 echo ""
 echo "═══════════════════════════════════════════════════════════"
 echo ""
@@ -119,3 +148,6 @@ echo -e "${GREEN}For detailed documentation, see README.md${NC}"
 echo -e "${GREEN}For a quick start guide, see QUICKSTART.md${NC}"
 echo ""
 echo "Happy architecting! ☁️🏗️"
+
+# Keep script alive while both processes run
+wait
