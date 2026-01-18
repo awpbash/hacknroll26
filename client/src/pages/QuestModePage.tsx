@@ -8,9 +8,7 @@ import { fetchChallenges } from '../services/challengesApi';
 import { orderChallengesForQuest, TOTAL_QUEST_CHALLENGES } from '../data/questChallengeOrder';
 
 const PageContainer = styled.div`
-  min-height: 100vh;
   background: var(--bg-primary);
-  padding-top: 70px;
 `;
 
 const LoadingContainer = styled.div`
@@ -100,12 +98,16 @@ const CompletionModal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: rgba(18, 18, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 184, 212, 0.3);
   border-radius: 16px;
   padding: 48px;
   max-width: 500px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(0, 184, 212, 0.2);
 
   h2 {
     font-size: 32px;
@@ -114,6 +116,7 @@ const ModalContent = styled.div`
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(0, 184, 212, 0.5));
   }
 
   p {
@@ -131,11 +134,14 @@ const ModalContent = styled.div`
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 184, 212, 0.3);
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      box-shadow:
+        0 6px 20px rgba(0, 184, 212, 0.4),
+        0 0 20px rgba(0, 184, 212, 0.3);
     }
   }
 `;
@@ -258,13 +264,11 @@ const QuestModePage: React.FC = () => {
       )}
 
       {/* Quest map with checkpoints */}
-      <div style={{ marginTop: '80px' }}>
-        <QuestMap
-          challenges={challenges}
-          getChallengeStatus={getChallengeStatus}
-          completedChallenges={progress?.completedChallenges || []}
-        />
-      </div>
+      <QuestMap
+        challenges={challenges}
+        getChallengeStatus={getChallengeStatus}
+        completedChallenges={progress?.completedChallenges || []}
+      />
 
       {/* Completion modal */}
       {showCompletionModal && (

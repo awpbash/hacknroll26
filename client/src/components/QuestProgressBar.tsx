@@ -12,16 +12,16 @@ const ProgressContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(18, 18, 26, 0.85);
   backdrop-filter: blur(10px);
-  border-bottom: 2px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid rgba(0, 184, 212, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 184, 212, 0.15);
 `;
 
 const ProgressContent = styled.div`
   max-width: 1400px;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -29,7 +29,7 @@ const ProgressContent = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 6px 16px;
   }
 `;
 
@@ -54,6 +54,7 @@ const PositionText = styled.div`
   span {
     color: var(--accent-primary);
     font-size: 20px;
+    text-shadow: 0 0 10px rgba(0, 184, 212, 0.5);
   }
 `;
 
@@ -93,10 +94,11 @@ const ProgressBarContainer = styled.div`
 const ProgressBarTrack = styled.div`
   flex: 1;
   height: 12px;
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 184, 212, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
 const ProgressBarFill = styled.div<{ percentage: number }>`

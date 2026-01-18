@@ -15,34 +15,53 @@ interface QuestCheckpointProps {
 const pulse = keyframes`
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 1.5px 4px rgba(79, 70, 229, 0.4);
   }
 `;
 
 const CheckpointContainer = styled.div<{ $status: ChallengeStatus; $difficulty: string }>`
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 5px;
+  height: 5px;
   cursor: ${props => (props.$status === 'locked' ? 'not-allowed' : 'pointer')};
   transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.3) translateY(-0.5px);
+    filter: brightness(1.2) drop-shadow(0 0 3px ${props =>
+      props.$difficulty === 'Easy'
+        ? 'rgba(0, 230, 118, 0.6)'
+        : props.$difficulty === 'Medium'
+        ? 'rgba(255, 165, 0, 0.6)'
+        : 'rgba(255, 0, 102, 0.6)'
+    });
+  }
 
   ${props =>
     props.$status === 'available' &&
     css`
       animation: ${pulse} 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 2px ${
+        props.$difficulty === 'Easy'
+          ? 'rgba(0, 230, 118, 0.4)'
+          : props.$difficulty === 'Medium'
+          ? 'rgba(255, 165, 0, 0.4)'
+          : 'rgba(255, 0, 102, 0.4)'
+      });
     `}
 
   ${props =>
     props.$status === 'completed' &&
     css`
       opacity: 0.85;
+      filter: drop-shadow(0 0 1.5px rgba(0, 230, 118, 0.3));
       &:hover {
         opacity: 1;
-        transform: translateY(-4px);
+        transform: scale(1.3) translateY(-0.5px);
       }
     `}
 
@@ -55,13 +74,13 @@ const CheckpointContainer = styled.div<{ $status: ChallengeStatus; $difficulty: 
     `}
 
   @media (max-width: 1200px) {
-    width: 45px;
-    height: 45px;
+    width: 5px;
+    height: 5px;
   }
 
   @media (max-width: 768px) {
-    width: 44px;
-    height: 44px;
+    width: 5px;
+    height: 5px;
   }
 `;
 
@@ -69,10 +88,17 @@ const Cloud = styled.div<{ $difficulty: string }>`
   position: relative;
   width: 100%;
   height: 100%;
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 2px solid
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 0 2px ${props =>
+      props.$difficulty === 'Easy'
+        ? 'rgba(0, 230, 118, 0.2)'
+        : props.$difficulty === 'Medium'
+        ? 'rgba(255, 165, 0, 0.2)'
+        : 'rgba(255, 0, 102, 0.2)'};
+  border: 1px solid
     ${props =>
       props.$difficulty === 'Easy'
         ? 'var(--success-color)'
@@ -88,8 +114,8 @@ const Cloud = styled.div<{ $difficulty: string }>`
 const NumberBadge = styled.div<{ $difficulty: string }>`
   position: relative;
   z-index: 10;
-  width: 40px;
-  height: 40px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: linear-gradient(
     135deg,
@@ -101,32 +127,32 @@ const NumberBadge = styled.div<{ $difficulty: string }>`
         : '#ef4444, #dc2626'}
   );
   color: white;
-  font-size: 18px;
+  font-size: 2px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.2);
 
   @media (max-width: 1200px) {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: 4px;
+    height: 4px;
+    font-size: 2px;
   }
 
   @media (max-width: 768px) {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 4px;
+    height: 4px;
+    font-size: 1.5px;
   }
 `;
 
 const StatusIcon = styled.div<{ $status: ChallengeStatus }>`
   position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 20px;
-  height: 20px;
+  top: -0.5px;
+  right: -0.5px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: ${props =>
     props.$status === 'completed'
@@ -138,8 +164,8 @@ const StatusIcon = styled.div<{ $status: ChallengeStatus }>`
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 2px;
+  box-shadow: 0 0.5px 0.5px rgba(0, 0, 0, 0.2);
   z-index: 20;
 
   ${props =>
@@ -149,31 +175,37 @@ const StatusIcon = styled.div<{ $status: ChallengeStatus }>`
     `}
 
   @media (max-width: 768px) {
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-    top: -2px;
-    right: -2px;
+    width: 2.5px;
+    height: 2.5px;
+    font-size: 1.5px;
+    top: -0.5px;
+    right: -0.5px;
   }
 `;
 
 const Tooltip = styled.div`
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  font-size: 13px;
+  margin-top: 2px;
+  padding: 2px 1px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(0, 184, 212, 0.3);
+  color: var(--text-primary);
+  font-size: 1.5px;
   font-weight: 500;
-  border-radius: 6px;
-  white-space: nowrap;
+  border-radius: 1.5px;
+  max-width: 100px;
+  text-align: center;
+  line-height: 1.2;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
   z-index: 30;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 0 8px rgba(0, 184, 212, 0.2);
 
   ${CheckpointContainer}:hover & {
     opacity: 1;
@@ -182,25 +214,27 @@ const Tooltip = styled.div`
   &::after {
     content: '';
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.9);
+    border: 3px solid transparent;
+    border-bottom-color: rgba(10, 10, 15, 0.95);
   }
 
   @media (max-width: 768px) {
-    font-size: 11px;
-    padding: 6px 10px;
+    font-size: 1.5px;
+    padding: 2px 3px;
+    max-height: 20px;
+    min-width: 85px;
   }
 `;
 
 const DifficultyBadge = styled.div<{ $difficulty: string }>`
   position: absolute;
-  bottom: -18px;
+  bottom: -4px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 2px 6px;
+  padding: 0.5px 1px;
   background: ${props =>
     props.$difficulty === 'Easy'
       ? 'var(--success-color)'
@@ -208,16 +242,23 @@ const DifficultyBadge = styled.div<{ $difficulty: string }>`
       ? 'var(--warning-color)'
       : 'var(--error-color)'};
   color: white;
-  font-size: 9px;
+  font-size: 3px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 1px;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 0.5px 1px rgba(0, 0, 0, 0.3),
+    0 0 3px ${props =>
+      props.$difficulty === 'Easy'
+        ? 'rgba(0, 230, 118, 0.4)'
+        : props.$difficulty === 'Medium'
+        ? 'rgba(255, 165, 0, 0.4)'
+        : 'rgba(255, 0, 102, 0.4)'};
 
   @media (max-width: 768px) {
-    font-size: 8px;
-    padding: 2px 5px;
-    bottom: -16px;
+    font-size: 2.5px;
+    padding: 0.5px 1px;
+    bottom: -3px;
   }
 `;
 
