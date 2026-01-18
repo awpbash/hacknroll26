@@ -3,6 +3,7 @@ const router = express.Router();
 const Submission = require('../models/Submission');
 const Challenge = require('../models/Challenge');
 const User = require('../models/User');
+const QuestProgress = require('../models/QuestProgress');
 const ArchitectureEvaluator = require('../utils/evaluator');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -173,6 +174,19 @@ router.post('/', authenticateToken, async (req, res) => {
           complexity: initialEvaluation.complexity,
           score: initialEvaluation.score
         });
+      }
+
+      // Update Quest Mode progress if challenge is completed
+      try {
+        console.log('🎯 Updating Quest Mode progress...');
+        await QuestProgress.updateProgress(req.userId, challengeId, {
+          score: initialEvaluation.score,
+          attempts: 1
+        });
+        console.log('✅ Quest Mode progress updated');
+      } catch (questError) {
+        // Don't fail the submission if quest progress update fails
+        console.error('⚠️  Failed to update Quest Mode progress:', questError.message);
       }
     }
 

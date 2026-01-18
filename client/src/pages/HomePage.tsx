@@ -301,7 +301,7 @@ const HomePage: React.FC = () => {
         <FeaturedCard
           gradient="linear-gradient(135deg, #6366f1, #8b5cf6)"
           emoji="🎯"
-          onClick={() => navigate('/challenges')}
+          onClick={() => navigate('/quest')}
         >
           <CardBadge>New</CardBadge>
           <CardTitle>Quest</CardTitle>
