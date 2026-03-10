@@ -33,14 +33,14 @@ For the complete noob, we also provide a simple guided course to bring you from 
 ### Backend
 - **Node.js** + **Express** - REST API
 - **Firebase Firestore** - Database for users, challenges, and submissions
-- **JWT** - Password Hashing
+- **JWT** - Session Management
 
 ### Frontend
 - **React 18** UI framework
 - **Vercel** - Hosting
 
 ### AI Integration
-- **OpenAI GPT-5** - Intelligent architecture evaluation
+- **OpenAI LLMs**
 
 ## Setup Instructions
 
